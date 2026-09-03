@@ -2,7 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Enums\TestDepartment;
 use App\Models\Test;
+use App\Support\LabCatalogue;
 use Illuminate\Database\Seeder;
 
 class TestSeeder extends Seeder
@@ -12,21 +14,79 @@ class TestSeeder extends Seeder
      */
     public function run(): void
     {
-        $tests = [
-            ['name' => 'Complete Blood Count (CBC)', 'price' => 150.00, 'normal_range' => '4.5-11.0 x10^3/µL'],
-            ['name' => 'Fasting Blood Sugar', 'price' => 80.00, 'normal_range' => '70-100 mg/dL'],
-            ['name' => 'HbA1c', 'price' => 200.00, 'normal_range' => '4.0-5.6 %'],
-            ['name' => 'Lipid Profile', 'price' => 250.00, 'normal_range' => 'LDL <100 mg/dL'],
-            ['name' => 'Liver Function Test (LFT)', 'price' => 300.00, 'normal_range' => 'ALT 7-56 U/L'],
-            ['name' => 'Kidney Function Test (KFT)', 'price' => 280.00, 'normal_range' => 'Creatinine 0.6-1.3 mg/dL'],
-            ['name' => 'Thyroid Stimulating Hormone (TSH)', 'price' => 180.00, 'normal_range' => '0.4-4.0 mIU/L'],
-            ['name' => 'Urinalysis', 'price' => 100.00, 'normal_range' => 'Negative'],
-            ['name' => 'C-Reactive Protein (CRP)', 'price' => 120.00, 'normal_range' => '<5 mg/L'],
-            ['name' => 'Vitamin D (25-OH)', 'price' => 350.00, 'normal_range' => '30-100 ng/mL'],
-        ];
+        foreach (LabCatalogue::tests() as $test) {
+            $department = TestDepartment::from($test['department']);
 
-        foreach ($tests as $test) {
-            Test::query()->create($test);
+            Test::query()->updateOrCreate(
+                ['name' => $test['name']],
+                [
+                    'code' => $test['code'],
+                    'department' => $department,
+                    'price' => $test['price'],
+                    'normal_range' => $test['normal_range'],
+                    'is_active' => $department->isActiveByDefault(),
+                ],
+            );
+        }
+
+        $this->seedTemplates();
+    }
+
+    private function seedTemplates(): void
+    {
+        $fbs = Test::query()->firstWhere('name', 'FBS');
+        if ($fbs !== null && $fbs->parameters()->doesntExist()) {
+            $fbs->update([
+                'interpretation' => 'Fasting blood sugar. Elevated values may indicate diabetes mellitus.',
+                'clinical_utility' => 'Screening and monitoring of diabetes.',
+                'method' => 'Enzymatic / GOD-POD',
+            ]);
+            $fbs->parameters()->create([
+                'name' => 'B. Sugar (F)',
+                'unit' => 'mg/dL',
+                'normal_range' => '70-100',
+                'sort_order' => 1,
+            ]);
+        }
+
+        $tb = Test::query()->firstWhere('name', 'TB-ICT');
+        if ($tb !== null && $tb->parameters()->doesntExist()) {
+            $tb->update([
+                'interpretation' => 'TB ICT detects IgG/IgM antibodies. Positive results require clinical correlation.',
+                'method' => 'Immunochromatography',
+            ]);
+            $tb->parameters()->create([
+                'name' => 'TB (ICT)',
+                'unit' => '',
+                'normal_range' => 'Negative',
+                'sort_order' => 1,
+            ]);
+        }
+
+        $tft = Test::query()->firstWhere('name', 'TFT');
+        if ($tft !== null && $tft->parameters()->doesntExist()) {
+            $tft->update([
+                'interpretation' => 'High TSH with low T4 suggests hypothyroidism. Low TSH with high T4 suggests hyperthyroidism.',
+                'clinical_utility' => 'Evaluation of thyroid function.',
+                'method' => 'Immunoassay',
+            ]);
+            $tft->parameters()->createMany([
+                ['name' => 'T3', 'unit' => 'nmol/L', 'normal_range' => '1.3-3.1', 'sort_order' => 1],
+                ['name' => 'T4', 'unit' => 'nmol/L', 'normal_range' => '66-181', 'sort_order' => 2],
+                ['name' => 'TSH', 'unit' => 'mIU/L', 'normal_range' => '0.4-4.0', 'sort_order' => 3],
+            ]);
+        }
+
+        $urine = Test::query()->firstWhere('name', 'Urine R/E');
+        if ($urine !== null && $urine->parameters()->doesntExist()) {
+            $urine->parameters()->createMany([
+                ['name' => 'Color', 'group_name' => 'CHEMICAL EXAMINATION', 'sort_order' => 1],
+                ['name' => 'Appearance', 'group_name' => 'CHEMICAL EXAMINATION', 'sort_order' => 2],
+                ['name' => 'Protein', 'group_name' => 'CHEMICAL EXAMINATION', 'normal_range' => 'Negative', 'sort_order' => 3],
+                ['name' => 'Glucose', 'group_name' => 'CHEMICAL EXAMINATION', 'normal_range' => 'Negative', 'sort_order' => 4],
+                ['name' => 'WBC', 'group_name' => 'MICROSCOPIC EXAMINATION', 'normal_range' => '0-5 /HPF', 'sort_order' => 5],
+                ['name' => 'RBC', 'group_name' => 'MICROSCOPIC EXAMINATION', 'normal_range' => '0-2 /HPF', 'sort_order' => 6],
+            ]);
         }
     }
 }

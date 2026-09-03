@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\TestDepartment;
 use App\Models\Test;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -21,6 +22,8 @@ class TestFactory extends Factory
             'name' => fake()->unique()->words(3, true),
             'price' => fake()->randomFloat(2, 50, 500),
             'normal_range' => fake()->numerify('##-##'),
+            'department' => TestDepartment::Routine,
+            'is_active' => true,
         ];
     }
 }

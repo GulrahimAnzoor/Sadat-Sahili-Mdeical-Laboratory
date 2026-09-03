@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('father_name');
             $table->string('gender');
             $table->text('description')->nullable();
-            $table->foreignId('doctor_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('doctor_id')->nullable()->constrained()->nullOnDelete();
             $table->timestamps();
         });
     }

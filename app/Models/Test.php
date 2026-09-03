@@ -2,18 +2,41 @@
 
 namespace App\Models;
 
+use App\Enums\TestDepartment;
 use Database\Factories\TestFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'price', 'normal_range'])]
+#[Fillable([
+    'code',
+    'name',
+    'department',
+    'price',
+    'normal_range',
+    'is_active',
+    'interpretation',
+    'clinical_utility',
+    'method',
+    'template_path',
+    'template_filename',
+])]
 class Test extends Model
 {
     /** @use HasFactory<TestFactory> */
     use HasFactory;
+
+    /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'department' => 'routine',
+        'is_active' => true,
+    ];
 
     /**
      * @return array<string, string>
@@ -22,7 +45,15 @@ class Test extends Model
     {
         return [
             'price' => 'decimal:2',
+            'is_active' => 'boolean',
+            'department' => TestDepartment::class,
         ];
+    }
+
+    #[Scope]
+    protected function active(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
     }
 
     public function patients(): BelongsToMany
@@ -40,5 +71,10 @@ class Test extends Model
     public function testResults(): HasMany
     {
         return $this->hasMany(TestResult::class);
+    }
+
+    public function parameters(): HasMany
+    {
+        return $this->hasMany(TestParameter::class)->orderBy('sort_order')->orderBy('id');
     }
 }
