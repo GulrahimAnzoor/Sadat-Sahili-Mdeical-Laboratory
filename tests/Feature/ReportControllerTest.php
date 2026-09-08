@@ -46,9 +46,42 @@ class ReportControllerTest extends TestCase
         $response->assertSee('لابراتوار', false);
         $response->assertSee('0787698996');
         $response->assertSee(config('lab.address'));
-        $response->assertSee('report-print-chrome');
+        $response->assertSee('report-top');
+        $response->assertSee('report-main');
+        $response->assertSee('report-footer');
         $response->assertSee('report-watermark');
         $response->assertSee('ssml-logo.png', false);
+        $response->assertSeeInOrder([
+            'Saadat Salihi',
+            'Hassan',
+            'Fasting Blood Sugar',
+            '0787698996',
+            config('lab.address'),
+        ]);
+    }
+
+    public function test_patient_report_prints_multiple_results_on_one_page(): void
+    {
+        $patient = Patient::factory()->create(['name' => 'Hassan']);
+        $first = Test::factory()->create(['name' => 'Glucose']);
+        $second = Test::factory()->create(['name' => 'Urea']);
+        $third = Test::factory()->create(['name' => 'Creatinine']);
+        $fourth = Test::factory()->create(['name' => 'Uric Acid']);
+
+        foreach ([$first, $second, $third, $fourth] as $test) {
+            TestResult::factory()->for($patient)->for($test)->create();
+        }
+
+        $html = $this->get(route('reports.show', $patient))
+            ->assertOk()
+            ->assertSee('Glucose')
+            ->assertSee('Urea')
+            ->assertSee('Creatinine')
+            ->assertSee('Uric Acid')
+            ->getContent();
+
+        $this->assertSame(1, substr_count($html, 'class="report-page"'));
+        $this->assertSame(4, substr_count($html, 'report-test-block'));
     }
 
     public function test_index_lists_patients_for_reports(): void

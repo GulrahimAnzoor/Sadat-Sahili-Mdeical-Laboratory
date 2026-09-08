@@ -1,5 +1,3 @@
-const prefetched = new Set();
-
 function samePage(url) {
     return url.pathname === window.location.pathname
         && url.search === window.location.search
@@ -19,7 +17,7 @@ function isInternalGet(anchor) {
         return false;
     }
 
-    if (anchor.hasAttribute('download') || anchor.target === '_blank' || anchor.dataset.noPrefetch === 'true') {
+    if (anchor.hasAttribute('download') || anchor.target === '_blank') {
         return false;
     }
 
@@ -61,22 +59,6 @@ function stopProgress() {
     }
 }
 
-function prefetch(href) {
-    const url = parseUrl(href);
-
-    if (!url || prefetched.has(url.href) || samePage(url)) {
-        return;
-    }
-
-    prefetched.add(url.href);
-
-    const link = document.createElement('link');
-    link.rel = 'prefetch';
-    link.href = url.href;
-    link.as = 'document';
-    document.head.appendChild(link);
-}
-
 function closestAnchor(target) {
     if (!(target instanceof Element)) {
         return null;
@@ -84,22 +66,6 @@ function closestAnchor(target) {
 
     return target.closest('a[href]');
 }
-
-document.addEventListener('pointerover', (event) => {
-    const anchor = closestAnchor(event.target);
-
-    if (anchor && isInternalGet(anchor)) {
-        prefetch(anchor.href);
-    }
-}, { capture: true });
-
-document.addEventListener('touchstart', (event) => {
-    const anchor = closestAnchor(event.target);
-
-    if (anchor && isInternalGet(anchor)) {
-        prefetch(anchor.href);
-    }
-}, { capture: true, passive: true });
 
 document.addEventListener('click', (event) => {
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {

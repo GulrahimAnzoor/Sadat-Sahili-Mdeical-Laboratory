@@ -6,6 +6,7 @@ use App\Enums\TestDepartment;
 use App\Http\Requests\StoreTestRequest;
 use App\Http\Requests\UpdateTestRequest;
 use App\Models\Test;
+use App\Support\RecordGuard;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -80,8 +81,10 @@ class TestController extends Controller
             ->with('success', __('Test updated successfully.'));
     }
 
-    public function destroy(Test $test): RedirectResponse
+    public function destroy(Test $test, RecordGuard $guard): RedirectResponse
     {
+        $guard->ensureTestCanBeDeleted($test);
+
         $test->delete();
 
         return redirect()

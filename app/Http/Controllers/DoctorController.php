@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreDoctorRequest;
 use App\Http\Requests\UpdateDoctorRequest;
 use App\Models\Doctor;
+use App\Support\RecordGuard;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -55,8 +56,10 @@ class DoctorController extends Controller
             ->with('success', __('Doctor updated successfully.'));
     }
 
-    public function destroy(Doctor $doctor): RedirectResponse
+    public function destroy(Doctor $doctor, RecordGuard $guard): RedirectResponse
     {
+        $guard->ensureDoctorCanBeDeleted($doctor);
+
         $doctor->delete();
 
         return redirect()

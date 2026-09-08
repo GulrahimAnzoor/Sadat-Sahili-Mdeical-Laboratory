@@ -22,8 +22,9 @@ class SettingsControllerTest extends TestCase
         $response->assertSee('Staff and roles');
         $response->assertSee('Cash accounts');
         $response->assertSee('Item names');
+        $response->assertSee('Database backups');
         $response->assertSee('Open page');
-        $response->assertSee('Upload Word / PDF');
+        $response->assertDontSee('Upload Word / PDF');
         $response->assertDontSee('Store and costs');
     }
 

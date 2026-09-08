@@ -22,8 +22,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'interpretation',
     'clinical_utility',
     'method',
-    'template_path',
-    'template_filename',
 ])]
 class Test extends Model
 {

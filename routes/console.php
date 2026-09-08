@@ -11,3 +11,7 @@ Artisan::command('inspire', function () {
 Schedule::command('inventory:check-expiry')
     ->daily()
     ->withoutOverlapping();
+
+Schedule::command('lab:backup')
+    ->daily()
+    ->withoutOverlapping();

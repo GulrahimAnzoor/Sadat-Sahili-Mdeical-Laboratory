@@ -12,31 +12,25 @@
     </div>
 
     <div class="report-root">
-        @include('reports._chrome', ['patient' => $patient, 'visit' => $visit])
+        <article class="report-page">
+            @include('reports._watermark')
 
-        @forelse ($visit->patientTests as $patientTest)
-            @php($testResult = $resultsByTestId->get($patientTest->test_id))
-            <article class="report-page">
-                @include('reports._watermark')
-                <div class="report-screen-chrome">
-                    @include('reports._header', ['patient' => $patient, 'visit' => $visit])
-                </div>
-                @include('reports._test-block', ['patientTest' => $patientTest, 'testResult' => $testResult])
-                <div class="report-screen-chrome">
-                    @include('reports._footer')
-                </div>
-            </article>
-        @empty
-            <article class="report-page">
-                @include('reports._watermark')
-                <div class="report-screen-chrome">
-                    @include('reports._header', ['patient' => $patient, 'visit' => $visit])
-                </div>
-                <p class="report-empty">{{ __('No tests have been assigned.') }}</p>
-                <div class="report-screen-chrome">
-                    @include('reports._footer')
-                </div>
-            </article>
-        @endforelse
+            <header class="report-top">
+                @include('reports._header', ['patient' => $patient, 'visit' => $visit])
+            </header>
+
+            <main class="report-main">
+                @forelse ($visit->patientTests as $patientTest)
+                    @include('reports._test-block', [
+                        'patientTest' => $patientTest,
+                        'testResult' => $resultsByTestId->get($patientTest->test_id),
+                    ])
+                @empty
+                    <p class="report-empty">{{ __('No tests have been assigned.') }}</p>
+                @endforelse
+            </main>
+
+            @include('reports._footer')
+        </article>
     </div>
 </x-layout>

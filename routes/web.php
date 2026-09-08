@@ -5,6 +5,7 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\BackupController;
 use App\Http\Controllers\CashTransactionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DoctorController;
@@ -96,9 +97,6 @@ Route::middleware('auth')->group(function () {
         Route::resource('tests', TestController::class);
         Route::get('tests-import/template', [TestImportController::class, 'template'])->name('tests.import.template');
         Route::post('tests-import', [TestImportController::class, 'store'])->name('tests.import');
-        Route::post('tests-templates', [TestImportController::class, 'storeTemplates'])->name('tests.templates.store');
-        Route::post('tests/{test}/template', [TestImportController::class, 'storeTemplates'])->name('tests.template.store');
-        Route::get('tests/{test}/template', [TestImportController::class, 'downloadTemplate'])->name('tests.template.download');
         Route::post('tests/{test}/parameters', [TestParameterController::class, 'store'])->name('tests.parameters.store');
         Route::delete('tests/{test}/parameters/{parameter}', [TestParameterController::class, 'destroy'])->name('tests.parameters.destroy');
         Route::get('settings/test-reports/{test?}', [TestReportContentController::class, 'edit'])->name('settings.test-reports.edit');
@@ -136,6 +134,12 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('can:'.LabPermission::Settings->value)->group(function () {
         Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
+        Route::get('settings/backups', [BackupController::class, 'index'])->name('settings.backups.index');
+        Route::post('settings/backups', [BackupController::class, 'store'])->name('settings.backups.store');
+        Route::get('settings/backups/{backup}/download', [BackupController::class, 'download'])
+            ->where('backup', 'ssml-backup-[A-Za-z0-9._-]+\.(sql|sqlite)')
+            ->name('settings.backups.download');
+        Route::post('settings/backups/restore', [BackupController::class, 'restore'])->name('settings.backups.restore');
         Route::get('settings/goods', [InventoryCatalogItemController::class, 'index'])->name('settings.goods.index');
         Route::post('settings/goods', [InventoryCatalogItemController::class, 'store'])->name('settings.goods.store');
         Route::delete('settings/goods/{inventoryCatalogItem}', [InventoryCatalogItemController::class, 'destroy'])->name('settings.goods.destroy');

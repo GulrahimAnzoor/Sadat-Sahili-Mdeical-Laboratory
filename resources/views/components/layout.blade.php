@@ -18,16 +18,7 @@
         <x-theme-boot />
         @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
             @vite(['resources/css/app.css', 'resources/js/app.js'])
-        @else
-            <link rel="preconnect" href="https://fonts.bunny.net">
-            <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700|noto-naskh-arabic:400,500,600,700" rel="stylesheet" />
-            <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
         @endif
-        @unless ($print)
-            <script type="speculationrules">
-                {"prefetch":[{"where":{"and":[{"href_matches":"/*"},{"not":{"selector_matches":"[download],[target=_blank],[data-no-prefetch]"}}]},"eagerness":"moderate"}]}
-            </script>
-        @endunless
     </head>
     <body class="{{ $printClass }} min-h-screen bg-slate-100 font-sans text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-100">
         <a href="#main-content" class="lab-skip">{{ __('Skip to content') }}</a>

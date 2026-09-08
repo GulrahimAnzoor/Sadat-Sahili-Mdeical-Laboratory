@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class ImportTestTemplatesRequest extends FormRequest
+class RestoreBackupRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -18,8 +18,8 @@ class ImportTestTemplatesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'files' => ['required', 'array', 'min:1'],
-            'files.*' => ['file', 'max:10240', 'mimes:pdf,doc,docx,zip', 'extensions:pdf,doc,docx'],
+            'backup' => ['required', 'string', 'max:255', 'regex:/^ssml-backup-[A-Za-z0-9._-]+\.(sql|sqlite)$/'],
+            'confirm' => ['accepted'],
         ];
     }
 }

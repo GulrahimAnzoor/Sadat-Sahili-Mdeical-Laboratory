@@ -7,6 +7,7 @@ use App\Http\Requests\UpdatePatientRequest;
 use App\Models\Doctor;
 use App\Models\Patient;
 use App\Support\LabAlerts;
+use App\Support\RecordGuard;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -90,8 +91,10 @@ class PatientController extends Controller
             ->with('success', __('Patient updated successfully.'));
     }
 
-    public function destroy(Patient $patient): RedirectResponse
+    public function destroy(Patient $patient, RecordGuard $guard): RedirectResponse
     {
+        $guard->ensurePatientCanBeDeleted($patient);
+
         $patient->delete();
 
         return redirect()

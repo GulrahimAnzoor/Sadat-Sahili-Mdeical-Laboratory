@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreSupplierRequest;
 use App\Http\Requests\UpdateSupplierRequest;
 use App\Models\Supplier;
+use App\Support\RecordGuard;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -55,8 +56,10 @@ class SupplierController extends Controller
             ->with('success', __('Supplier updated successfully.'));
     }
 
-    public function destroy(Supplier $supplier): RedirectResponse
+    public function destroy(Supplier $supplier, RecordGuard $guard): RedirectResponse
     {
+        $guard->ensureSupplierCanBeDeleted($supplier);
+
         $supplier->delete();
 
         return redirect()

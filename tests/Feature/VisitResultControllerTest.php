@@ -8,6 +8,7 @@ use App\Models\Patient;
 use App\Models\PatientTest;
 use App\Models\Test;
 use App\Models\TestParameter;
+use App\Models\TestResult;
 use App\Models\TestResultValue;
 use App\Models\Visit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -64,12 +65,20 @@ class VisitResultControllerTest extends TestCase
             ->assertSee('report-summary')
             ->assertSee('Correlate with clinical findings and peripheral smear.')
             ->assertSee('report-page')
-            ->assertSee('report-print-chrome')
+            ->assertSee('report-top')
+            ->assertSee('report-main')
+            ->assertSee('report-footer')
             ->assertSee('report-watermark')
             ->assertSee('ssml-logo.png', false)
             ->assertSee('سعادت صالحي طبي', false)
             ->assertSee('لابراتوار', false)
-            ->assertSee('0789462768');
+            ->assertSee('0789462768')
+            ->assertSeeInOrder([
+                'Saadat Salihi',
+                'Hassan',
+                'CBC',
+                '0789462768',
+            ]);
     }
 
     public function test_results_page_lists_the_visit_tests_and_parameter_fields(): void
@@ -186,6 +195,41 @@ class VisitResultControllerTest extends TestCase
             ->assertSee('40')
             ->assertSee('7.35-7.45')
             ->assertSee('35-45');
+    }
+
+    public function test_visit_report_prints_nested_tests_on_one_page(): void
+    {
+        $patient = Patient::factory()->create();
+        $visit = Visit::factory()->for($patient)->create();
+        $panel = Test::factory()->create(['name' => 'CBC Panel']);
+        $children = [
+            Test::factory()->create(['name' => 'WBC Count']),
+            Test::factory()->create(['name' => 'RBC Count']),
+            Test::factory()->create(['name' => 'Platelet Count']),
+        ];
+
+        PatientTest::factory()->for($visit)->for($patient)->for($panel)->create();
+
+        foreach ($children as $child) {
+            PatientTest::factory()->for($visit)->for($patient)->for($child)->create();
+        }
+
+        TestResult::factory()->for($patient)->for($panel)->create([
+            'visit_id' => $visit->id,
+            'result' => 'Complete',
+        ]);
+
+        $html = $this->get(route('visits.report', $visit))
+            ->assertOk()
+            ->assertSee('CBC Panel')
+            ->assertSee('WBC Count')
+            ->assertSee('RBC Count')
+            ->assertSee('Platelet Count')
+            ->assertSee('Complete')
+            ->getContent();
+
+        $this->assertSame(1, substr_count($html, 'class="report-page"'));
+        $this->assertSame(4, substr_count($html, 'report-test-block'));
     }
 
     public function test_emailing_report_sends_mailable(): void

@@ -10,7 +10,7 @@ return [
     'report_badge_ps' => 'د لابراتوار راپور',
     'phones' => ['0787698996', '0789462768'],
     'email' => 'info@ssml.af',
-    'address' => 'Laghman Tower, Muzaffar Babarkhel Plaza,next Saadat Salihi Pharmacy',
+    'address' => 'Laghman Tower, Muzaffar Babakarkhel Plaza Saadat Salihi Pharmacy',
     'address_ps' => 'لغمان ټاور، مظفر بابرخېل پلازا، سعادت صالحي درملتون ترڅنګ ',
     'logo' => 'images/ssml-logo.png',
     'themes' => ['light', 'dark', 'system'],

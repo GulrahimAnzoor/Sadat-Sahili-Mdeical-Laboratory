@@ -7,7 +7,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-    --font-sans: 'Instrument Sans', 'Noto Naskh Arabic', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+    --font-sans: 'Segoe UI', Tahoma, 'Noto Naskh Arabic', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
         'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
     --color-brand: oklch(0.43 0.09 195);
     --color-brand-dark: oklch(0.32 0.07 195);
@@ -17,13 +17,29 @@
     --animate-lab-soft-glow: lab-soft-glow 3.4s ease-in-out infinite;
 }
 
+@font-face {
+    font-family: 'Noto Naskh Arabic';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('../fonts/NotoNaskhArabic-Bold.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'Noto Nastaliq Urdu';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('../fonts/NotoNastaliqUrdu-Bold.woff2') format('woff2');
+}
+
 @view-transition {
-    navigation: auto;
+    navigation: none;
 }
 
 html {
     color-scheme: light;
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
 }
 
 html.dark {
@@ -47,7 +63,7 @@ html.dark {
     }
 
     html[dir='rtl'] body {
-        font-family: 'Noto Naskh Arabic', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+        font-family: 'Segoe UI', Tahoma, 'Noto Naskh Arabic', ui-sans-serif, system-ui, sans-serif;
     }
 
     ::selection {
@@ -78,8 +94,6 @@ html.dark {
         border-inline-end: 1px solid rgb(186 230 253 / 0.75);
         background: linear-gradient(180deg, rgb(224 242 254) 0%, rgb(240 249 255) 100%);
         box-shadow: 8px 0 28px -16px rgb(14 165 233 / 0.2);
-        view-transition-name: lab-sidebar;
-        backface-visibility: hidden;
     }
 
     html.dark .lab-sidebar {
@@ -201,7 +215,6 @@ html.dark {
     }
 
     .lab-topbar {
-        view-transition-name: lab-topbar;
         backface-visibility: hidden;
     }
 
@@ -225,10 +238,6 @@ html.dark {
         border-color: rgb(125 211 252 / 0.9);
     }
 
-    .lab-page {
-        view-transition-name: lab-page;
-    }
-
     .lab-content {
         min-width: 0;
     }
@@ -242,12 +251,6 @@ html.dark {
     @media print {
         .lab-content {
             padding-inline-start: 0 !important;
-        }
-
-        .lab-sidebar,
-        .lab-topbar,
-        .lab-page {
-            view-transition-name: none;
         }
     }
 
@@ -342,7 +345,6 @@ html.dark {
         z-index: 80;
         height: 2.5px;
         pointer-events: none;
-        view-transition-name: none;
     }
 
     .lab-progress[hidden] {
@@ -365,11 +367,7 @@ html.dark {
     }
 
     html.lab-navigating .lab-progress-bar {
-        animation: lab-progress-run 1.05s var(--ease-lab) forwards;
-    }
-
-    html.lab-navigating {
-        cursor: progress;
+        animation: lab-progress-run 0.7s linear forwards;
     }
 
     .auth-shell {
@@ -430,41 +428,6 @@ html.dark {
         @apply inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/25;
         @apply transition hover:from-blue-700 hover:to-violet-700;
         @apply active:scale-[0.99] disabled:pointer-events-none disabled:opacity-45;
-    }
-}
-
-::view-transition-old(root),
-::view-transition-new(root),
-::view-transition-old(lab-sidebar),
-::view-transition-new(lab-sidebar),
-::view-transition-old(lab-topbar),
-::view-transition-new(lab-topbar) {
-    animation: none;
-    mix-blend-mode: normal;
-}
-
-::view-transition-group(lab-sidebar),
-::view-transition-group(lab-topbar) {
-    animation-duration: 1ms;
-}
-
-::view-transition-old(lab-page) {
-    animation: lab-page-out 160ms var(--ease-lab) both;
-}
-
-::view-transition-new(lab-page) {
-    animation: lab-page-in 240ms var(--ease-lab) both;
-}
-
-@keyframes lab-page-out {
-    to {
-        opacity: 0;
-    }
-}
-
-@keyframes lab-page-in {
-    from {
-        opacity: 0;
     }
 }
 
@@ -552,13 +515,6 @@ html.dark {
         animation: none !important;
         transition: none !important;
     }
-
-    ::view-transition-old(root),
-    ::view-transition-new(root),
-    ::view-transition-old(lab-page),
-    ::view-transition-new(lab-page) {
-        animation: none !important;
-    }
 }
 
 .report-root {
@@ -570,42 +526,45 @@ html.dark {
     --report-line: #c9d7e6;
     --report-paper: #ffffff;
     --report-silver: #c5c9ce;
+    --report-footer-height: 24mm;
     color: var(--report-ink);
     direction: ltr;
 }
 
-.report-print-chrome {
-    display: none;
-}
-
 .report-page {
     position: relative;
-    display: flex;
+    display: grid;
     width: min(210mm, 100%);
     min-height: 297mm;
     margin-inline: auto;
     margin-bottom: 1.5rem;
-    flex-direction: column;
+    grid-template-rows: auto minmax(0, 1fr) auto;
     overflow: hidden;
     border: 1px solid rgb(203 213 225);
     background: var(--report-paper);
     box-shadow: 0 18px 40px -28px rgb(15 23 42 / 0.45);
     color: var(--report-ink);
+    padding: 0;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
 }
 
-.report-page .report-screen-chrome:last-child {
-    margin-top: auto;
+.report-top {
+    grid-row: 1;
+}
+
+.report-main {
+    grid-row: 2;
+    min-height: 0;
 }
 
 .report-watermark {
     position: absolute;
-    top: 63%;
+    top: 62%;
     left: 50%;
     z-index: 0;
-    width: 118mm;
-    height: 118mm;
+    width: 148mm;
+    height: 148mm;
     transform: translate(-50%, -50%);
     object-fit: contain;
     opacity: 0.12;
@@ -614,25 +573,21 @@ html.dark {
     -webkit-print-color-adjust: exact;
 }
 
-.report-print-chrome .report-watermark {
-    display: none;
-}
-
-.report-screen-chrome,
-.report-page > :not(.report-watermark) {
+.report-page > .report-top,
+.report-page > .report-main {
     position: relative;
     z-index: 1;
 }
 
 .report-letterhead {
-    padding: 8px 16px 0;
+    padding: 0 4px;
 }
 
 .report-letterhead-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 38mm minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) 48mm minmax(0, 1fr);
     align-items: center;
-    column-gap: 12px;
+    column-gap: 6px;
     direction: ltr;
     unicode-bidi: isolate;
 }
@@ -641,10 +596,10 @@ html.dark {
 .report-letterhead-ps {
     display: flex;
     width: 100%;
-    min-height: 38mm;
+    min-height: 0;
     flex-direction: column;
     justify-content: center;
-    gap: 5px;
+    gap: 4px;
 }
 
 .report-letterhead-en {
@@ -665,14 +620,24 @@ html.dark {
 .report-brand-ps {
     margin: 0;
     width: 100%;
-    font-size: 22px;
+    font-size: 30px;
     font-weight: 800;
-    line-height: 1.2;
+    line-height: 1.15;
     color: var(--report-navy);
 }
 
 .report-brand-ps {
-    font-size: 26px;
+    font-family: 'Noto Nastaliq Urdu', 'Noto Naskh Arabic', Tahoma, sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.8;
+    font-synthesis: none;
+}
+
+.report-letterhead-ps .report-badge,
+.report-letterhead-ps .report-slogan {
+    font-family: 'Noto Naskh Arabic', Tahoma, sans-serif;
+    font-weight: 700;
 }
 
 .report-brand-line {
@@ -687,8 +652,8 @@ html.dark {
     display: inline-flex;
     border-radius: 999px;
     background: var(--report-blue);
-    padding: 3px 11px;
-    font-size: 11px;
+    padding: 5px 14px;
+    font-size: 15px;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -703,7 +668,7 @@ html.dark {
 
 .report-slogan {
     margin: 0;
-    font-size: 13px;
+    font-size: 17px;
     color: var(--report-muted);
 }
 
@@ -713,30 +678,28 @@ html.dark {
 }
 
 .report-logo {
-    width: 36mm;
-    height: 36mm;
+    width: 46mm;
+    height: 46mm;
     object-fit: contain;
     background: white;
 }
 
 .report-rule {
     display: block;
-    height: 5px;
-    margin-top: 8px;
+    height: 6px;
+    margin-top: 4px;
     background: linear-gradient(90deg, var(--report-navy) 0%, var(--report-blue) 48%, var(--report-red) 100%);
     box-shadow: inset 0 2px 0 var(--report-blue), inset 0 -2px 0 var(--report-red);
 }
 
-.report-rule-footer {
-    margin: 0;
+.report-footer-rule {
+    display: block;
+    height: 5px;
+    background: linear-gradient(180deg, var(--report-red) 0 50%, var(--report-navy) 50% 100%);
 }
 
 .report-patient {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 10px 14px;
-    align-items: start;
-    margin: 8px 16px 10px;
+    margin: 4px 0 4px;
     border: 1px solid var(--report-line);
     border-radius: 10px;
     background: linear-gradient(180deg, #f4f9ff 0%, #ffffff 70%);
@@ -746,15 +709,15 @@ html.dark {
 .report-patient-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 3px 16px;
+    gap: 4px 18px;
 }
 
 .report-patient-grid div {
     display: grid;
-    grid-template-columns: 88px minmax(0, 1fr);
+    grid-template-columns: 118px minmax(0, 1fr);
     gap: 6px;
-    font-size: 15px;
-    line-height: 1.45;
+    font-size: 19px;
+    line-height: 1.4;
 }
 
 .report-patient-grid dt {
@@ -767,37 +730,32 @@ html.dark {
     color: var(--report-navy);
 }
 
-.report-qr {
-    width: 22mm;
-    height: 22mm;
-    border: 1px solid var(--report-line);
-    border-radius: 6px;
-    background: white;
-    padding: 2px;
+.report-test-block + .report-test-block {
+    margin-top: 10px;
 }
 
 .report-test-title {
-    margin: 8px 16px 12px;
+    margin: 4px 0 8px;
     border: 1.5px solid #d97706;
     border-radius: 8px;
-    padding: 8px 12px;
+    padding: 9px 12px;
     text-align: center;
-    font-size: 16px;
+    font-size: 20px;
     font-weight: 800;
     color: var(--report-navy);
 }
 
 .report-table {
-    width: calc(100% - 32px);
-    margin: 0 16px 12px;
+    width: 100%;
+    margin: 0 0 8px;
     border-collapse: collapse;
-    font-size: 14px;
+    font-size: 18px;
 }
 
 .report-table th,
 .report-table td {
     border-bottom: 1px solid #e6eef6;
-    padding: 8px 10px;
+    padding: 9px 10px;
     text-align: start;
     vertical-align: top;
 }
@@ -805,7 +763,7 @@ html.dark {
 .report-table thead th {
     border-bottom: 2px solid var(--report-navy);
     background: #eef4fb;
-    font-size: 12px;
+    font-size: 16px;
     font-weight: 800;
     text-decoration: underline;
     color: var(--report-navy);
@@ -813,7 +771,7 @@ html.dark {
 
 .report-group td {
     background: #f8fafc;
-    font-size: 12px;
+    font-size: 15px;
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -838,7 +796,7 @@ html.dark {
 
 .report-result {
     font-weight: 800;
-    font-size: 17px;
+    font-size: 21px;
 }
 
 .report-result.is-abnormal {
@@ -848,25 +806,25 @@ html.dark {
 .report-unit {
     display: block;
     margin-top: 2px;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
     color: var(--report-muted);
 }
 
 .report-range {
     white-space: pre-wrap;
-    font-size: 13px;
+    font-size: 17px;
     line-height: 1.5;
     color: #334155;
 }
 
 .report-summary {
-    margin: 8px 16px 12px;
+    margin: 6px 0 10px;
 }
 
 .report-summary h4 {
     margin: 0 0 6px;
-    font-size: 14px;
+    font-size: 18px;
     font-weight: 800;
     text-decoration: underline;
     color: var(--report-navy);
@@ -874,23 +832,23 @@ html.dark {
 
 .report-summary p {
     margin: 0;
-    font-size: 13.5px;
-    line-height: 1.7;
+    font-size: 17px;
+    line-height: 1.65;
     text-align: justify;
     white-space: pre-wrap;
     color: #1e293b;
 }
 
 .report-notes {
-    margin: 0 16px 10px;
+    margin: 0 0 8px;
     border-left: 3px solid var(--report-blue);
-    padding: 6px 10px;
+    padding: 8px 12px;
     background: #f4f8ff;
 }
 
 .report-notes h4 {
-    margin: 0 0 3px;
-    font-size: 13px;
+    margin: 0 0 4px;
+    font-size: 16px;
     font-weight: 800;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -899,57 +857,68 @@ html.dark {
 
 .report-notes p {
     margin: 0;
-    font-size: 13px;
+    font-size: 17px;
     line-height: 1.6;
     color: #334155;
     white-space: pre-wrap;
 }
 
 .report-empty {
-    margin: 28px 16px;
+    margin: 16px 0;
     text-align: center;
-    font-size: 13px;
+    font-size: 17px;
     color: var(--report-muted);
 }
 
-.report-footer {
-    margin-top: auto;
-    padding: 0 16px 10px;
+.report-page > .report-footer {
+    grid-row: 3;
+    align-self: end;
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: var(--report-paper);
 }
 
-.report-footer-meta {
+.report-footer-body {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 6px 10px;
-    padding: 8px 0 4px;
-    font-size: 11px;
-    line-height: 1.4;
+    gap: 1px;
+    padding: 5px 8px 6px;
+    text-align: center;
     color: var(--report-navy);
 }
 
-.report-footer-meta p {
+.report-footer-contact,
+.report-footer-address {
     margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.35;
 }
 
-.report-footer-dot {
-    width: 4px;
-    height: 4px;
-    border-radius: 999px;
-    background: var(--report-red);
+.report-footer-address {
+    font-weight: 600;
 }
 
 .report-footer-ps {
-    margin: 2px 0 0;
+    margin: 0;
     text-align: center;
-    font-size: 11px;
+    font-family: 'Noto Naskh Arabic', Tahoma, sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.5;
     color: var(--report-navy);
 }
 
 @page a4 {
     size: A4 portrait;
-    margin: 0;
+    margin-top: 0.3cm;
+    margin-bottom: 0;
+    margin-left: 0.4cm;
+    margin-right: 0.4cm;
 }
 
 @page a5 {
@@ -1005,18 +974,13 @@ html.dark {
         box-shadow: none !important;
     }
 
-    .report-print-chrome {
-        display: block;
-    }
-
-    .report-print-chrome .report-watermark {
-        display: block;
+    .report-page .report-watermark {
         position: fixed;
-        top: 63%;
+        top: 58%;
         left: 50%;
         z-index: 0;
-        width: 128mm;
-        height: 128mm;
+        width: 158mm;
+        height: 158mm;
         transform: translate(-50%, -50%);
         object-fit: contain;
         opacity: 0.12;
@@ -1025,63 +989,42 @@ html.dark {
         -webkit-print-color-adjust: exact;
     }
 
-    .report-page .report-watermark {
-        display: none;
-    }
-
-    .report-print-header {
-        position: fixed;
-        top: 6mm;
-        right: 10mm;
-        left: 10mm;
-        z-index: 5;
-        background: white;
-    }
-
-    .report-print-chrome .report-letterhead {
-        padding-right: 0;
-        padding-left: 0;
-    }
-
-    .report-print-chrome .report-letterhead,
-    .report-print-chrome .report-patient {
-        margin-right: 0;
-        margin-left: 0;
-    }
-
-    .report-print-chrome .report-footer {
-        position: fixed;
-        right: 10mm;
-        bottom: 6mm;
-        left: 10mm;
-        z-index: 5;
-        margin: 0;
-        padding: 0;
-        background: white;
-    }
-
-    .report-screen-chrome {
-        display: none !important;
-    }
-
     .report-page {
         position: relative;
         z-index: 1;
+        display: grid;
         width: auto;
-        min-height: 0;
+        min-height: calc(297mm - 0.3cm);
         margin: 0;
         overflow: visible;
         border: 0;
         box-shadow: none;
-        padding: 92mm 12mm 30mm;
-        break-after: page;
-        page-break-after: always;
+        padding: 0 0 var(--report-footer-height);
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        break-after: auto;
+        page-break-after: auto;
         background: transparent;
     }
 
-    .report-page:last-child {
-        break-after: auto;
-        page-break-after: auto;
+    .report-top {
+        grid-row: 1;
+    }
+
+    .report-main {
+        grid-row: 2;
+        min-height: 0;
+    }
+
+    .report-page > .report-footer {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 3;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        background: white;
     }
 
     .report-table,
@@ -1093,10 +1036,12 @@ html.dark {
         margin-right: 0;
     }
 
-    .report-table tr,
-    .report-notes,
-    .report-summary {
-        break-inside: avoid;
-        page-break-inside: avoid;
+    .report-table thead {
+        display: table-header-group;
+    }
+
+    .report-test-block {
+        break-inside: auto;
+        page-break-inside: auto;
     }
 }

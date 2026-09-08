@@ -12,32 +12,22 @@
     </div>
 
     <div class="report-root">
-        @include('reports._chrome', ['patient' => $patient])
+        <article class="report-page">
+            @include('reports._watermark')
 
-        @if ($patient->testResults->isEmpty())
-            <article class="report-page">
-                @include('reports._watermark')
-                <div class="report-screen-chrome">
-                    @include('reports._header', ['patient' => $patient])
-                </div>
-                <p class="report-empty">{{ __('No result has been recorded yet.') }}</p>
-                <div class="report-screen-chrome">
-                    @include('reports._footer')
-                </div>
-            </article>
-        @else
-            @foreach ($patient->testResults as $testResult)
-                <article class="report-page">
-                    @include('reports._watermark')
-                    <div class="report-screen-chrome">
-                        @include('reports._header', ['patient' => $patient])
-                    </div>
+            <header class="report-top">
+                @include('reports._header', ['patient' => $patient])
+            </header>
+
+            <main class="report-main">
+                @forelse ($patient->testResults as $testResult)
                     @include('reports._test-block', ['patientTest' => null, 'testResult' => $testResult])
-                    <div class="report-screen-chrome">
-                        @include('reports._footer')
-                    </div>
-                </article>
-            @endforeach
-        @endif
+                @empty
+                    <p class="report-empty">{{ __('No result has been recorded yet.') }}</p>
+                @endforelse
+            </main>
+
+            @include('reports._footer')
+        </article>
     </div>
 </x-layout>

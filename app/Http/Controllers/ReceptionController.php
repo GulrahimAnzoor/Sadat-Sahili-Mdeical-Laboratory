@@ -141,9 +141,8 @@ class ReceptionController extends Controller
             $discountAmount = round($subtotal * $discountPercent / 100, 2);
             $total = round(max(0, $subtotal - $discountAmount), 2);
             $paid = (bool) $validated['paid'];
-            $paidAmount = $paid
-                ? (isset($validated['paid_amount']) ? round((float) $validated['paid_amount'], 2) : $total)
-                : round((float) ($validated['paid_amount'] ?? 0), 2);
+            $requestedPaidAmount = round((float) ($validated['paid_amount'] ?? 0), 2);
+            $paidAmount = $paid ? $total : min($total, max(0, $requestedPaidAmount));
 
             if ($paidAmount >= $total && $total > 0) {
                 $paid = true;

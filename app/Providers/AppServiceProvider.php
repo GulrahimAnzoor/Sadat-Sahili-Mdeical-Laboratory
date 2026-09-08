@@ -47,7 +47,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('login', function (Request $request) {
-            return Limit::perMinute(20)->by($request->ip());
+            return Limit::perMinute(8)->by($request->ip());
         });
 
         RateLimiter::for('register', function (Request $request) {
@@ -66,7 +66,7 @@ class AppServiceProvider extends ServiceProvider
             LabAlerts::scanExpiryAlertsIfDue();
 
             $view->with([
-                'unreadNotificationCount' => $user->notifications()->count(),
+                'unreadNotificationCount' => $user->unreadNotifications()->count(),
             ]);
         });
     }

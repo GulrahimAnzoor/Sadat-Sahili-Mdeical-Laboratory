@@ -11,6 +11,7 @@
         ->implode(' ');
 @endphp
 
+<section class="report-test-block">
 @if ($test)
     <h3 class="report-test-title">{{ $title }}</h3>
 @endif
@@ -81,3 +82,4 @@
 @else
     <p class="report-empty">{{ __('No result has been recorded yet.') }}</p>
 @endif
+</section>

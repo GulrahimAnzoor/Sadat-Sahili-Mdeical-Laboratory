@@ -17,10 +17,6 @@
         <x-theme-boot />
         @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
             @vite(['resources/css/app.css', 'resources/js/app.js'])
-        @else
-            <link rel="preconnect" href="https://fonts.bunny.net">
-            <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700|noto-naskh-arabic:400,500,600,700" rel="stylesheet" />
-            <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
         @endif
     </head>
     <body class="auth-shell min-h-screen font-sans text-slate-800 antialiased dark:text-slate-100">

@@ -30,7 +30,7 @@ class TokenController extends Controller
             $size = 'a6';
         }
 
-        $patient->load(['doctor', 'patientTests.test']);
+        $patient->load(['doctor', 'patientTests.test', 'testResults.test.parameters', 'testResults.values.parameter']);
 
         return view('tokens.show', [
             'visit' => null,

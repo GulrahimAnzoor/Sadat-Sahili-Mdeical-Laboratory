@@ -4,13 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Enums\TestDepartment;
 use App\Http\Requests\ImportTestsRequest;
-use App\Http\Requests\ImportTestTemplatesRequest;
 use App\Models\Test;
-use App\Support\TestTemplateImporter;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TestImportController extends Controller
@@ -112,42 +108,5 @@ class TestImportController extends Controller
                 'created' => $created,
                 'updated' => $updated,
             ]));
-    }
-
-    public function storeTemplates(ImportTestTemplatesRequest $request, TestTemplateImporter $importer, ?Test $test = null): RedirectResponse
-    {
-        $files = $request->file('files', []);
-
-        if (! is_array($files)) {
-            $files = [$files];
-        }
-
-        $result = $importer->importMany(array_values(array_filter($files)), $test);
-
-        $message = __('Linked :attached files and read :parameters ranges.', [
-            'attached' => $result['attached'],
-            'parameters' => $result['parameters'],
-        ]);
-
-        if ($result['created'] > 0) {
-            $message .= ' '.__(':count new tests were created from the file names.', ['count' => $result['created']]);
-        }
-
-        if ($result['unmatched'] !== []) {
-            return back()
-                ->with('success', $message)
-                ->withErrors(['files' => __('Could not match: :names', ['names' => implode(', ', $result['unmatched'])])]);
-        }
-
-        return back()->with('success', $message);
-    }
-
-    public function downloadTemplate(Test $test): BinaryFileResponse
-    {
-        abort_if($test->template_path === null || ! Storage::disk('local')->exists($test->template_path), 404);
-
-        return response()->file(Storage::disk('local')->path($test->template_path), [
-            'Content-Disposition' => 'inline; filename="'.($test->template_filename ?? 'template').'"',
-        ]);
     }
 }

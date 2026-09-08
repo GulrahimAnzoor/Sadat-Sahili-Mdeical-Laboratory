@@ -29,22 +29,6 @@
 
     <x-panel class="mb-6" :title="__('Test template')">
         <x-slot:subtitle>{{ __('Units, ranges and interpretation print automatically. The technician types RESULT only.') }}</x-slot:subtitle>
-        <div class="space-y-4 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
-            @if ($test->template_filename)
-                <p class="text-sm text-slate-600 dark:text-slate-300">
-                    {{ __('Linked file') }}:
-                    <a href="{{ route('tests.template.download', $test) }}" class="font-medium text-teal-700 hover:text-teal-900">{{ $test->template_filename }}</a>
-                </p>
-            @endif
-            <form method="POST" action="{{ route('tests.template.store', $test) }}" enctype="multipart/form-data" class="flex flex-wrap items-end gap-3">
-                @csrf
-                <div class="min-w-56 flex-1">
-                    <label class="mb-1 block text-sm">{{ __('Upload Word / PDF') }}</label>
-                    <input type="file" name="files[]" accept=".pdf,.doc,.docx,application/pdf" required class="lab-input">
-                </div>
-                <x-btn type="submit">{{ __('Upload and link') }}</x-btn>
-            </form>
-        </div>
         <div class="px-5 py-4">
             <form method="POST" action="{{ route('tests.parameters.store', $test) }}" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
                 @csrf

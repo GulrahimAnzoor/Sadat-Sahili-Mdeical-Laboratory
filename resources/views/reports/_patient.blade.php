@@ -1,7 +1,4 @@
 @php
-    $qrUrl = isset($visit)
-        ? route('visits.report', $visit)
-        : route('reports.show', $patient);
     $sampledAt = isset($visit) ? $visit->created_at : $patient->created_at;
     $referrer = isset($visit) ? $visit->referrerLabel() : $patient->referrerLabel();
 @endphp
@@ -51,12 +48,4 @@
             </div>
         @endisset
     </dl>
-
-    <img
-        src="https://api.qrserver.com/v1/create-qr-code/?size=92x92&data={{ urlencode($qrUrl) }}"
-        alt="QR"
-        width="92"
-        height="92"
-        class="report-qr"
-    >
 </section>

@@ -38,27 +38,31 @@ class VisitBilling
     {
         $this->ensureEditable($visit);
 
-        if ($visit->patientTests()->where('test_id', $test->id)->doesntExist()) {
-            PatientTest::query()->create([
-                'visit_id' => $visit->id,
-                'patient_id' => $visit->patient_id,
-                'test_id' => $test->id,
-                'total_price' => $test->price,
-                'paid' => false,
-                'status' => VisitStatus::Registered,
-            ]);
-        }
+        return DB::transaction(function () use ($visit, $test): Visit {
+            if ($visit->patientTests()->where('test_id', $test->id)->doesntExist()) {
+                PatientTest::query()->create([
+                    'visit_id' => $visit->id,
+                    'patient_id' => $visit->patient_id,
+                    'test_id' => $test->id,
+                    'total_price' => $test->price,
+                    'paid' => false,
+                    'status' => VisitStatus::Registered,
+                ]);
+            }
 
-        return $this->recalculate($visit);
+            return $this->recalculate($visit);
+        });
     }
 
     public function detach(Visit $visit, Test $test): Visit
     {
         $this->ensureEditable($visit);
 
-        $visit->patientTests()->where('test_id', $test->id)->delete();
+        return DB::transaction(function () use ($visit, $test): Visit {
+            $visit->patientTests()->where('test_id', $test->id)->delete();
 
-        return $this->recalculate($visit);
+            return $this->recalculate($visit);
+        });
     }
 
     /**
@@ -133,56 +137,84 @@ class VisitBilling
 
     public function collectRemaining(Visit $visit, CashLedger $ledger): Visit
     {
-        $visit = $this->recalculate($visit);
+        return DB::transaction(function () use ($visit, $ledger): Visit {
+            $visit = Visit::query()->lockForUpdate()->findOrFail($visit->id);
 
-        $status = $visit->status;
+            $visit->patientTests()
+                ->whereIn('status', [VisitStatus::Registered, VisitStatus::Paid])
+                ->update([
+                    'paid' => true,
+                    'status' => VisitStatus::Paid,
+                ]);
 
-        if (in_array($status, [VisitStatus::Registered, VisitStatus::Paid], true)) {
-            $status = VisitStatus::Paid;
-        }
+            $visit->patientTests()
+                ->whereNotIn('status', [VisitStatus::Registered, VisitStatus::Paid])
+                ->update(['paid' => true]);
 
-        $visit->update([
-            'paid' => true,
-            'paid_amount' => $visit->total,
-            'status' => $status,
-        ]);
+            $visit = $this->recalculate($visit);
 
-        $visit->patientTests()
-            ->whereIn('status', [VisitStatus::Registered, VisitStatus::Paid])
-            ->update([
-                'paid' => true,
-                'status' => VisitStatus::Paid,
-            ]);
+            $ledger->recordVisitPayment($visit);
 
-        $visit->patientTests()
-            ->whereNotIn('status', [VisitStatus::Registered, VisitStatus::Paid])
-            ->update(['paid' => true]);
+            return $visit->fresh(['patient', 'patientTests.test']);
+        });
+    }
 
-        $ledger->recordVisitPayment($visit->fresh());
+    public function markTestPaid(PatientTest $patientTest, CashLedger $ledger): Visit
+    {
+        return DB::transaction(function () use ($patientTest, $ledger): Visit {
+            $patientTest = PatientTest::query()->lockForUpdate()->findOrFail($patientTest->id);
 
-        return $visit->fresh(['patient', 'patientTests.test']);
+            $values = ['paid' => true];
+
+            if (in_array($patientTest->status, [VisitStatus::Registered, VisitStatus::Paid], true)) {
+                $values['status'] = VisitStatus::Paid;
+            }
+
+            $patientTest->update($values);
+
+            $visit = Visit::query()->lockForUpdate()->findOrFail($patientTest->visit_id);
+
+            $visit = $this->recalculate($visit);
+            $ledger->recordVisitPayment($visit);
+
+            return $visit;
+        });
     }
 
     public function recalculate(Visit $visit): Visit
     {
-        $subtotal = round((float) $visit->patientTests()->sum('total_price'), 2);
+        $tests = $visit->patientTests()->get(['id', 'total_price', 'paid']);
+        $subtotal = round((float) $tests->sum('total_price'), 2);
         $percent = round((float) $visit->discount_percent, 2);
         $discountAmount = round($subtotal * $percent / 100, 2);
         $total = round(max(0, $subtotal - $discountAmount), 2);
+        $paidSubtotal = round((float) $tests->where('paid', true)->sum('total_price'), 2);
+        $allPaid = $tests->isNotEmpty() && $tests->every(fn (PatientTest $row): bool => $row->paid);
+        $paidAmount = $allPaid
+            ? $total
+            : ($subtotal > 0 ? round($total * $paidSubtotal / $subtotal, 2) : 0);
+
+        $status = $visit->status;
+
+        if ($allPaid && in_array($status, [VisitStatus::Registered, VisitStatus::Paid], true)) {
+            $status = VisitStatus::Paid;
+        }
 
         $visit->update([
             'subtotal' => $subtotal,
             'discount_percent' => $percent,
             'discount_amount' => $discountAmount,
             'total' => $total,
-            'paid_amount' => $visit->paid ? $total : $visit->paid_amount,
+            'paid_amount' => $paidAmount,
+            'paid' => $allPaid,
+            'status' => $status,
         ]);
 
         return $visit->fresh(['patientTests.test']);
     }
 
     /**
-     * @return array{visit_id: int, subtotal: float, discount_percent: float, discount_amount: float, total: float, test_ids: list<int>}
+     * @return array{visit_id: int, subtotal: float, discount_percent: float, discount_amount: float, total: float, paid_amount: float, remaining: float, test_ids: list<int>}
      */
     public function totals(Visit $visit): array
     {
@@ -192,13 +224,15 @@ class VisitBilling
             'discount_percent' => (float) $visit->discount_percent,
             'discount_amount' => (float) $visit->discount_amount,
             'total' => (float) $visit->total,
+            'paid_amount' => (float) $visit->paid_amount,
+            'remaining' => $visit->remainingAmount(),
             'test_ids' => $visit->patientTests->pluck('test_id')->map(fn ($id): int => (int) $id)->all(),
         ];
     }
 
     private function ensureEditable(Visit $visit): void
     {
-        if (in_array($visit->status, [VisitStatus::Delivered, VisitStatus::Completed], true)) {
+        if (in_array($visit->status, [VisitStatus::Paid, VisitStatus::Delivered, VisitStatus::Completed], true)) {
             throw ValidationException::withMessages([
                 'visit' => __('This visit can no longer be changed.'),
             ]);

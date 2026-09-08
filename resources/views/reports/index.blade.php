@@ -1,6 +1,10 @@
 <x-layout :title="__('Reports')">
     <x-page-header :description="__('View or print each patient\'s test report')">
         <x-slot:actions>
+            <form method="GET" class="flex gap-2">
+                <input type="search" name="q" value="{{ request('q') }}" placeholder="{{ __('Search patients') }}" class="lab-input w-52">
+                <x-btn type="submit" variant="secondary" icon="search">{{ __('Search') }}</x-btn>
+            </form>
             <x-btn :href="route('patients.index')" variant="secondary" icon="user">{{ __('Patients') }}</x-btn>
         </x-slot:actions>
     </x-page-header>

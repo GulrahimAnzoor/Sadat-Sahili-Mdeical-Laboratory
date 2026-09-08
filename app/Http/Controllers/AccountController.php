@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreAccountRequest;
 use App\Http\Requests\UpdateAccountRequest;
 use App\Models\Account;
+use App\Support\RecordGuard;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -58,8 +59,10 @@ class AccountController extends Controller
             ->with('success', __('Account updated.'));
     }
 
-    public function destroy(Account $account): RedirectResponse
+    public function destroy(Account $account, RecordGuard $guard): RedirectResponse
     {
+        $guard->ensureAccountCanBeDeleted($account);
+
         if ($account->is_default && Account::query()->count() === 1) {
             return back()->withErrors(['account' => __('Keep at least one cash account.')]);
         }

@@ -6,18 +6,6 @@
         </x-slot:actions>
     </x-page-header>
 
-    <form method="POST" action="{{ route('tests.templates.store') }}" enctype="multipart/form-data" class="lab-card mb-4 flex flex-wrap items-end gap-3 p-4">
-        @csrf
-        <div class="min-w-56 flex-1">
-            <label for="import-file" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{{ __('Upload Word / PDF') }}</label>
-            <input id="import-file" type="file" name="files[]" accept=".pdf,.doc,.docx,application/pdf" multiple required class="lab-input">
-            <p class="mt-1 text-xs text-slate-500">{{ __('Name the file like the test (CBC.docx). Ranges print from that file; you only type the result.') }}</p>
-            @error('files')<p class="mt-1 text-sm text-red-700">{{ $message }}</p>@enderror
-            @error('files.*')<p class="mt-1 text-sm text-red-700">{{ $message }}</p>@enderror
-        </div>
-        <x-btn type="submit">{{ __('Upload and link') }}</x-btn>
-    </form>
-
     <form method="GET" class="mb-4 flex flex-wrap gap-2">
         <input type="search" name="q" value="{{ request('q') }}" placeholder="{{ __('Search tests') }}" class="lab-input max-w-xs">
         <select name="department" class="lab-input max-w-xs">

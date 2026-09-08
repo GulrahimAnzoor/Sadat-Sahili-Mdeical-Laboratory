@@ -15,7 +15,7 @@
 
         <div class="report-letterhead-mark">
             @if (is_file($logo))
-                <img src="{{ asset(config('lab.logo')) }}?v=4" alt="{{ config('lab.short_name') }}" class="report-logo" width="128" height="128">
+                <img src="{{ asset(config('lab.logo')) }}?v=5" alt="{{ config('lab.short_name') }}" class="report-logo" width="176" height="176">
             @else
                 <x-brand-mark />
             @endif

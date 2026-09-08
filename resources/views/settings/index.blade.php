@@ -50,27 +50,12 @@
                         <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3h6m-5.2 0v4.5L7 13.2V18a5 5 0 0 0 10 0v-4.8L14.2 7.5V3" /></svg>
                     </x-slot:icon>
                 </x-settings-card>
-                <div class="rounded-2xl border border-dashed border-teal-300 bg-gradient-to-br from-white to-teal-50/60 p-5 dark:border-teal-800 dark:from-slate-900 dark:to-teal-950/30">
-                    <div class="flex items-start justify-between gap-3">
-                        <div>
-                            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{{ __('Upload Word / PDF') }}</h3>
-                            <p class="mt-1 text-sm leading-6 text-slate-500">{{ __('Name the file like the test (CBC.docx). Ranges print from that file; you only type the result.') }}</p>
-                        </div>
-                        <span class="rounded-full bg-teal-100 px-2.5 py-1 text-[11px] font-semibold text-teal-800 dark:bg-teal-950 dark:text-teal-300">{{ $templateCount }} {{ __('linked') }}</span>
-                    </div>
-                    <form method="POST" action="{{ route('tests.templates.store') }}" enctype="multipart/form-data" class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-                        @csrf
-                        <input type="file" name="files[]" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple required class="lab-input">
-                        <x-btn type="submit">{{ __('Upload and link') }}</x-btn>
-                    </form>
-                    @error('files')
-                        <p class="mt-2 text-sm text-red-700">{{ $message }}</p>
-                    @enderror
-                    @error('files.*')
-                        <p class="mt-2 text-sm text-red-700">{{ $message }}</p>
-                    @enderror
-                </div>
             @endcan
+            <x-settings-card :href="route('settings.backups.index')" :title="__('Database backups')" :description="__('Create and restore copies of laboratory records on this computer.')" :count="$backupCount" tone="amber">
+                <x-slot:icon>
+                    <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M7.5 12 12 16.5 16.5 12M12 3v13.5" /></svg>
+                </x-slot:icon>
+            </x-settings-card>
             <x-settings-card :href="route('settings.goods.index')" :title="__('Item names')" :description="__('Save names that appear in the inventory Category list.')" :count="$goodsCount" tone="teal">
                 <x-slot:icon>
                     <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 6.75h15M4.5 12h15M4.5 17.25h9" /></svg>

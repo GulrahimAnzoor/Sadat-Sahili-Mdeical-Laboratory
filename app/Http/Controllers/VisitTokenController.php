@@ -16,7 +16,7 @@ class VisitTokenController extends Controller
             $size = 'a6';
         }
 
-        $visit->load(['patient', 'doctor', 'patientTests.test']);
+        $visit->load(['patient.doctor', 'doctor', 'patientTests.test', 'testResults.test.parameters', 'testResults.values.parameter']);
 
         return view('tokens.show', [
             'visit' => $visit,
