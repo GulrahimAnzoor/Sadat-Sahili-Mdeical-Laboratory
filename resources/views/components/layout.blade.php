@@ -127,7 +127,7 @@
                         </x-nav-link>
                     @endcan
                     @can('inventory.manage')
-                        <x-nav-link :href="route('inventory-items.index')" :active="request()->routeIs('inventory-items.*')">
+                        <x-nav-link :href="route('inventory-items.index')" :active="request()->routeIs('inventory-items.*') || request()->routeIs('stock-usages.*')">
                             <x-slot:icon>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.2 12 3.5 3 8.2l9 4.7 9-4.7Zm0 7.3-9 4.7-9-4.7M3 8.2v7.3m18-7.3v7.3" /></svg>
                             </x-slot:icon>

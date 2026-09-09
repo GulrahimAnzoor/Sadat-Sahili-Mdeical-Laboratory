@@ -24,6 +24,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\StockUsageController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\TestImportController;
@@ -172,6 +173,8 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('can:'.LabPermission::Inventory->value)->group(function () {
         Route::resource('inventory-items', InventoryItemController::class);
+        Route::get('stock-usages', [StockUsageController::class, 'create'])->name('stock-usages.create');
+        Route::post('stock-usages', [StockUsageController::class, 'store'])->name('stock-usages.store');
     });
 
     Route::middleware('can:'.LabPermission::Expenses->value)->group(function () {

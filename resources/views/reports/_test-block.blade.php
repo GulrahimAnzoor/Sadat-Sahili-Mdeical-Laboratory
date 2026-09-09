@@ -81,5 +81,6 @@
     @endforeach
 @else
     <p class="report-empty">{{ __('No result has been recorded yet.') }}</p>
+    
 @endif
 </section>

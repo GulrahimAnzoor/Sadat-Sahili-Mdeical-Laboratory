@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Support\LabAlerts;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
 class NotificationController extends Controller
@@ -34,6 +35,7 @@ class NotificationController extends Controller
 
         $path = $this->safePath($item->data['url'] ?? null);
         $item->delete();
+        Cache::forget('unread-notifications:'.$request->user()->id);
 
         return redirect()->to($path);
     }
@@ -41,6 +43,7 @@ class NotificationController extends Controller
     public function markAllRead(Request $request): RedirectResponse
     {
         $request->user()->notifications()->delete();
+        Cache::forget('unread-notifications:'.$request->user()->id);
 
         return redirect()
             ->route('notifications.index')

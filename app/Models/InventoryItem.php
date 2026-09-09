@@ -7,9 +7,12 @@ use App\Observers\InventoryItemObserver;
 use Database\Factories\InventoryItemFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[ObservedBy([InventoryItemObserver::class])]
 #[Fillable([
@@ -89,5 +92,28 @@ class InventoryItem extends Model
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
+    }
+
+    public function movements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class);
+    }
+
+    #[Scope]
+    protected function inStock(Builder $query): Builder
+    {
+        return $query->where('quantity', '>', 0);
+    }
+
+    public function lotLabel(): string
+    {
+        $parts = [
+            $this->name,
+            $this->batch_number ? __('Batch').' '.$this->batch_number : null,
+            $this->expires_on?->toDateString(),
+            $this->quantity.' '.__('on hand'),
+        ];
+
+        return collect($parts)->filter()->implode(' · ');
     }
 }

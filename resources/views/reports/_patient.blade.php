@@ -45,6 +45,7 @@
             <div>
                 <dt>{{ __('Token') }}</dt>
                 <dd>{{ $visit->token_code ?: '—' }}</dd>
+            
             </div>
         @endisset
     </dl>

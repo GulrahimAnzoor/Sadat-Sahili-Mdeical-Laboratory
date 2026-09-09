@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ExpenseCategory;
 use Database\Factories\ExpenseFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -22,6 +23,7 @@ class Expense extends Model
         return [
             'amount' => 'decimal:2',
             'spent_on' => 'date',
+            'category' => ExpenseCategory::class,
         ];
     }
 

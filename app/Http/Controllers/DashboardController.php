@@ -17,9 +17,11 @@ class DashboardController extends Controller
     {
         $from = now()->subDays(13)->startOfDay();
 
-        $recentVisits = Visit::query()
+        $visitsByDay = Visit::query()
+            ->selectRaw('date(created_at) as day, count(*) as total')
             ->where('created_at', '>=', $from)
-            ->get(['created_at']);
+            ->groupByRaw('date(created_at)')
+            ->pluck('total', 'day');
 
         $incomeByDay = CashTransaction::query()
             ->selectRaw('date(created_at) as day, sum(amount) as total')
@@ -29,15 +31,13 @@ class DashboardController extends Controller
             ->groupByRaw('date(created_at)')
             ->pluck('total', 'day');
 
-        $trend = collect(range(13, 0))->map(function (int $daysAgo) use ($recentVisits, $incomeByDay): array {
+        $trend = collect(range(13, 0))->map(function (int $daysAgo) use ($visitsByDay, $incomeByDay): array {
             $day = now()->subDays($daysAgo);
             $key = $day->toDateString();
 
             return [
                 'label' => $day->translatedFormat('d M'),
-                'visits' => $recentVisits->filter(
-                    fn (Visit $visit): bool => $visit->created_at->isSameDay($day),
-                )->count(),
+                'visits' => (int) $visitsByDay->get($key, 0),
                 'income' => round((float) $incomeByDay->get($key, 0), 2),
             ];
         });
@@ -61,15 +61,28 @@ class DashboardController extends Controller
                 'total' => (int) $row->total,
             ]);
 
+        $unpaid = Visit::unpaid()
+            ->whereHas('patientTests')
+            ->selectRaw('count(*) as total_count, coalesce(sum(total - paid_amount), 0) as remaining')
+            ->first();
+
         $unpaidVisits = Visit::unpaid()
             ->whereHas('patientTests')
-            ->with(['patient', 'patientTests.test'])
+            ->with([
+                'patient:id,name',
+                'patientTests:id,visit_id,test_id',
+                'patientTests.test:id,name',
+            ])
             ->latest('id')
             ->limit(3)
             ->get();
 
         $awaitingResults = Visit::awaitingResult()
-            ->with(['patient', 'patientTests.test'])
+            ->with([
+                'patient:id,name',
+                'patientTests:id,visit_id,test_id',
+                'patientTests.test:id,name',
+            ])
             ->latest('id')
             ->limit(3)
             ->get();
@@ -77,11 +90,8 @@ class DashboardController extends Controller
         return view('dashboard', [
             'patientCount' => Patient::query()->count(),
             'todayPatientCount' => Patient::query()->whereDate('created_at', today())->count(),
-            'unpaidCount' => Visit::unpaid()->whereHas('patientTests')->count(),
-            'unpaidAmount' => (float) Visit::unpaid()
-                ->whereHas('patientTests')
-                ->selectRaw('coalesce(sum(total - paid_amount), 0) as remaining')
-                ->value('remaining'),
+            'unpaidCount' => (int) ($unpaid?->total_count ?? 0),
+            'unpaidAmount' => (float) ($unpaid?->remaining ?? 0),
             'paidAmount' => $ledger->labIncome(),
             'todayIncome' => $ledger->labIncome(now()->startOfDay(), now()->endOfDay()),
             'completedVisitCount' => Visit::query()

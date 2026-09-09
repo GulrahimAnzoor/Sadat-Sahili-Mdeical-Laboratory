@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 
 #[Fillable(['visit_id', 'patient_id', 'test_id', 'total_price', 'paid', 'token_code', 'queue_number', 'status'])]
@@ -103,5 +104,10 @@ class PatientTest extends Model
     public function test(): BelongsTo
     {
         return $this->belongsTo(Test::class);
+    }
+
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class);
     }
 }

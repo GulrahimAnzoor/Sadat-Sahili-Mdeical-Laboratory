@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\StockMovementType;
 use App\Enums\VisitStatus;
 use App\Http\Requests\StoreVisitResultsRequest;
+use App\Models\InventoryItem;
+use App\Models\StockMovement;
 use App\Models\Test;
 use App\Models\TestResult;
 use App\Models\Visit;
+use App\Services\StockLedger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -29,16 +33,31 @@ class VisitResultController extends Controller
             ?? $visit->patientTests->first(fn ($patientTest) => ! $resultsByTestId->has($patientTest->test_id))?->id
             ?? $visit->patientTests->first()?->id;
 
+        $materialsByPatientTestId = StockMovement::query()
+            ->with('inventoryItem:id,name,quantity,batch_number,expires_on')
+            ->where('type', StockMovementType::OutTest)
+            ->whereIn('patient_test_id', $visit->patientTests->pluck('id'))
+            ->orderBy('id')
+            ->get()
+            ->groupBy(fn (StockMovement $movement): int => (int) $movement->patient_test_id);
+
         return view('visits.results', [
             'visit' => $visit,
             'resultsByTestId' => $resultsByTestId,
             'activeTestId' => $activeTestId,
+            'stockLots' => InventoryItem::query()
+                ->inStock()
+                ->orderBy('name')
+                ->orderBy('expires_on')
+                ->orderBy('id')
+                ->get(['id', 'name', 'quantity', 'batch_number', 'expires_on']),
+            'materialsByPatientTestId' => $materialsByPatientTestId,
         ]);
     }
 
-    public function store(StoreVisitResultsRequest $request, Visit $visit): RedirectResponse
+    public function store(StoreVisitResultsRequest $request, Visit $visit, StockLedger $stock): RedirectResponse
     {
-        DB::transaction(function () use ($request, $visit): void {
+        DB::transaction(function () use ($request, $visit, $stock): void {
             $visit->load(['patientTests.test.parameters', 'testResults']);
 
             foreach ($request->validated('results') as $row) {
@@ -72,38 +91,51 @@ class VisitResultController extends Controller
                     ->values();
 
                 $overall = $row['result'] ?? data_get($values->first(), 'value');
+                $hasMaterials = (bool) ($row['consume_materials'] ?? false);
+                $materials = $row['materials'] ?? [];
 
-                if (! filled($overall) && $values->isEmpty()) {
+                if (! filled($overall) && $values->isEmpty() && ! $hasMaterials) {
                     continue;
                 }
 
-                $unit = $row['unit']
-                    ?? $test->parameters->first()?->unit
-                    ?? '';
+                if (filled($overall) || $values->isNotEmpty()) {
+                    $unit = $row['unit']
+                        ?? $test->parameters->first()?->unit
+                        ?? '';
 
-                $testResult = TestResult::query()->updateOrCreate(
-                    [
-                        'visit_id' => $visit->id,
-                        'patient_id' => $visit->patient_id,
-                        'test_id' => $patientTest->test_id,
-                    ],
-                    [
-                        'result' => (string) ($overall ?? ''),
-                        'unit' => (string) $unit,
-                    ],
-                );
+                    $testResult = TestResult::query()->updateOrCreate(
+                        [
+                            'visit_id' => $visit->id,
+                            'patient_id' => $visit->patient_id,
+                            'test_id' => $patientTest->test_id,
+                        ],
+                        [
+                            'result' => (string) ($overall ?? ''),
+                            'unit' => (string) $unit,
+                        ],
+                    );
 
-                $testResult->values()->delete();
+                    $testResult->values()->delete();
 
-                foreach ($values as $valueRow) {
-                    $testResult->values()->create([
-                        'test_parameter_id' => $valueRow['test_parameter_id'],
-                        'value' => $valueRow['value'],
-                    ]);
+                    foreach ($values as $valueRow) {
+                        $testResult->values()->create([
+                            'test_parameter_id' => $valueRow['test_parameter_id'],
+                            'value' => $valueRow['value'],
+                        ]);
+                    }
+
+                    if ($patientTest->status !== VisitStatus::Delivered) {
+                        $patientTest->update(['status' => VisitStatus::Completed]);
+                    }
                 }
 
-                if ($patientTest->status !== VisitStatus::Delivered) {
-                    $patientTest->update(['status' => VisitStatus::Completed]);
+                if ($hasMaterials) {
+                    $stock->replaceTestConsumption(
+                        $patientTest,
+                        $visit,
+                        $materials,
+                        $request->user()?->id,
+                    );
                 }
             }
 

@@ -12,6 +12,24 @@ class StoreVisitResultsRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $results = collect($this->input('results', []))->map(function (mixed $row): mixed {
+            if (! is_array($row) || ! isset($row['materials']) || ! is_array($row['materials'])) {
+                return $row;
+            }
+
+            $row['materials'] = collect($row['materials'])
+                ->filter(fn (mixed $material): bool => is_array($material) && (int) ($material['inventory_item_id'] ?? 0) > 0)
+                ->values()
+                ->all();
+
+            return $row;
+        })->all();
+
+        $this->merge(['results' => $results]);
+    }
+
     /**
      * @return array<string, ValidationRule|array<mixed>|string>
      */
@@ -31,6 +49,10 @@ class StoreVisitResultsRequest extends FormRequest
             'results.*.extra_rows.*.value' => ['nullable', 'string', 'max:255'],
             'results.*.extra_rows.*.unit' => ['nullable', 'string', 'max:255'],
             'results.*.extra_rows.*.normal_range' => ['nullable', 'string', 'max:20000'],
+            'results.*.consume_materials' => ['sometimes', 'boolean'],
+            'results.*.materials' => ['nullable', 'array'],
+            'results.*.materials.*.inventory_item_id' => ['required', 'integer', 'exists:inventory_items,id'],
+            'results.*.materials.*.quantity' => ['required', 'numeric', 'min:0.01'],
         ];
     }
 }

@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePurchaseRequest;
 use App\Http\Requests\UpdatePurchaseRequest;
-use App\Models\InventoryItem;
 use App\Models\Purchase;
 use App\Models\Supplier;
+use App\Services\StockLedger;
 use App\Support\CashLedger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -32,10 +32,10 @@ class PurchaseController extends Controller
         ]);
     }
 
-    public function store(StorePurchaseRequest $request, CashLedger $ledger): RedirectResponse
+    public function store(StorePurchaseRequest $request, CashLedger $ledger, StockLedger $stock): RedirectResponse
     {
-        $purchase = DB::transaction(function () use ($request, $ledger): Purchase {
-            $purchase = $this->persist($request);
+        $purchase = DB::transaction(function () use ($request, $ledger, $stock): Purchase {
+            $purchase = $this->persist($request, $stock);
             $ledger->syncPurchase($purchase);
 
             return $purchase;
@@ -63,12 +63,12 @@ class PurchaseController extends Controller
         ]);
     }
 
-    public function update(UpdatePurchaseRequest $request, Purchase $purchase, CashLedger $ledger): RedirectResponse
+    public function update(UpdatePurchaseRequest $request, Purchase $purchase, CashLedger $ledger, StockLedger $stock): RedirectResponse
     {
-        DB::transaction(function () use ($request, $purchase, $ledger): void {
-            $this->revertStock($purchase);
+        DB::transaction(function () use ($request, $purchase, $ledger, $stock): void {
+            $stock->revertPurchase($purchase);
             $purchase->items()->delete();
-            $this->persist($request, $purchase);
+            $this->persist($request, $stock, $purchase);
             $ledger->syncPurchase($purchase->refresh());
         });
 
@@ -77,10 +77,10 @@ class PurchaseController extends Controller
             ->with('success', __('Purchase updated successfully.'));
     }
 
-    public function destroy(Purchase $purchase, CashLedger $ledger): RedirectResponse
+    public function destroy(Purchase $purchase, CashLedger $ledger, StockLedger $stock): RedirectResponse
     {
-        DB::transaction(function () use ($purchase, $ledger): void {
-            $this->revertStock($purchase);
+        DB::transaction(function () use ($purchase, $ledger, $stock): void {
+            $stock->revertPurchase($purchase);
             $ledger->forgetPurchase($purchase);
             $purchase->delete();
         });
@@ -90,7 +90,7 @@ class PurchaseController extends Controller
             ->with('success', __('Purchase deleted.'));
     }
 
-    private function persist(StorePurchaseRequest $request, ?Purchase $purchase = null): Purchase
+    private function persist(StorePurchaseRequest $request, StockLedger $stock, ?Purchase $purchase = null): Purchase
     {
         $validated = $request->validated();
         $supplier = Supplier::query()->findOrFail($validated['supplier_id']);
@@ -127,7 +127,7 @@ class PurchaseController extends Controller
         foreach ($validated['items'] as $item) {
             $lineTotal = (float) $item['quantity'] * (float) $item['unit_price'];
 
-            $purchase->items()->create([
+            $purchaseItem = $purchase->items()->create([
                 'name' => $item['name'],
                 'generic_name' => $item['generic_name'] ?? null,
                 'manufacturer' => $item['manufacturer'] ?? null,
@@ -138,34 +138,11 @@ class PurchaseController extends Controller
                 'line_total' => $lineTotal,
             ]);
 
-            $inventory = InventoryItem::query()->firstOrNew(['name' => $item['name']]);
-            $inventory->quantity = (float) $inventory->quantity + (float) $item['quantity'];
-            $inventory->unit_cost = $item['unit_price'];
-            $inventory->batch_number = $item['batch_number'] ?? $inventory->batch_number;
-            $inventory->expires_on = $item['expires_on'] ?? $inventory->expires_on;
-            $inventory->supplier_id = $supplier->id;
-            $inventory->save();
+            $stock->receivePurchaseItem($purchase, $purchaseItem, $supplier->id);
         }
 
         $supplier->update(['current_balance' => $remaining]);
 
         return $purchase->refresh();
-    }
-
-    private function revertStock(Purchase $purchase): void
-    {
-        $purchase->loadMissing('items');
-
-        foreach ($purchase->items as $item) {
-            $inventory = InventoryItem::query()->where('name', $item->name)->first();
-
-            if ($inventory === null) {
-                continue;
-            }
-
-            $inventory->update([
-                'quantity' => max(0, (float) $inventory->quantity - (float) $item->quantity),
-            ]);
-        }
     }
 }

@@ -57,20 +57,18 @@ class PatientController extends Controller
 
     public function show(Patient $patient): View
     {
-        $patient->load([
-            'doctor',
-            'visits.doctor',
-            'visits.patientTests.test',
-            'visits.testResults.test',
-            'patientTests.test',
-            'testResults.test',
-        ]);
-
-        $resultsByTestId = $patient->testResults->keyBy('test_id');
+        $patient->load('doctor');
+        $patient->setRelation(
+            'visits',
+            $patient->visits()
+                ->with(['doctor', 'patientTests.test'])
+                ->latest('id')
+                ->limit(30)
+                ->get(),
+        );
 
         return view('patients.show', [
             'patient' => $patient,
-            'resultsByTestId' => $resultsByTestId,
         ]);
     }
 

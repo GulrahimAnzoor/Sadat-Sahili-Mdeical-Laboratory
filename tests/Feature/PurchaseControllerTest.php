@@ -40,6 +40,12 @@ class PurchaseControllerTest extends TestCase
         $this->assertSame('150.00', $purchase->remaining);
         $this->assertSame('150.00', $supplier->fresh()->current_balance);
         $this->assertSame('2.00', InventoryItem::query()->firstWhere('name', 'Glucose kit')?->quantity);
+        $this->assertSame('B1', InventoryItem::query()->firstWhere('name', 'Glucose kit')?->batch_number);
+        $this->assertDatabaseHas('stock_movements', [
+            'type' => 'in_purchase',
+            'quantity' => '2.00',
+            'purchase_id' => $purchase->id,
+        ]);
         $this->assertDatabaseHas('cash_transactions', [
             'purchase_id' => $purchase->id,
             'type' => 'out',

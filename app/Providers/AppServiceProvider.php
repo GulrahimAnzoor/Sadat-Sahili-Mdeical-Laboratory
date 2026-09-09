@@ -8,6 +8,7 @@ use App\Support\LabAlerts;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
@@ -66,7 +67,11 @@ class AppServiceProvider extends ServiceProvider
             LabAlerts::scanExpiryAlertsIfDue();
 
             $view->with([
-                'unreadNotificationCount' => $user->unreadNotifications()->count(),
+                'unreadNotificationCount' => Cache::remember(
+                    'unread-notifications:'.$user->id,
+                    now()->addSeconds(15),
+                    fn (): int => $user->unreadNotifications()->count(),
+                ),
             ]);
         });
     }

@@ -56,4 +56,9 @@ class Purchase extends Model
     {
         return $this->hasOne(CashTransaction::class);
     }
+
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class);
+    }
 }

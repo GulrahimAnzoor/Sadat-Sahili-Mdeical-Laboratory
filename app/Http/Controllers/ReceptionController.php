@@ -25,9 +25,14 @@ class ReceptionController extends Controller
     public function index(): View
     {
         return view('reception.index', [
-            'doctors' => Doctor::query()->orderBy('name')->get(),
+            'doctors' => Doctor::query()->orderBy('name')->get(['id', 'name']),
             'visits' => Visit::query()
-                ->with(['patient', 'doctor', 'patientTests.test'])
+                ->with([
+                    'patient:id,name',
+                    'doctor:id,name',
+                    'patientTests:id,visit_id,test_id',
+                    'patientTests.test:id,name',
+                ])
                 ->whereHas('patientTests')
                 ->today()
                 ->latest('id')
@@ -40,19 +45,19 @@ class ReceptionController extends Controller
         $patient->load('doctor');
 
         $visit = Visit::query()
-            ->with(['patientTests.test'])
+            ->with(['patientTests:id,visit_id,test_id', 'patientTests.test:id,name,price,department'])
             ->whereBelongsTo($patient)
             ->today()
             ->where('status', VisitStatus::Registered)
             ->latest('id')
             ->first();
 
-        $tests = Test::query()->active()->orderBy('department')->orderBy('name')->get();
+        $tests = Test::query()->active()->orderBy('department')->orderBy('name')->get(['id', 'name', 'price', 'department']);
 
         return view('reception.visit', [
             'patient' => $patient,
             'visit' => $visit,
-            'doctors' => Doctor::query()->orderBy('name')->get(),
+            'doctors' => Doctor::query()->orderBy('name')->get(['id', 'name']),
             'catalogue' => $tests->map(fn (Test $test): array => [
                 'id' => $test->id,
                 'name' => $test->name,

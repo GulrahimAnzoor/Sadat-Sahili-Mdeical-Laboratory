@@ -1,5 +1,5 @@
 <x-layout :title="__('Expenses')">
-    <x-page-header :description="__('Rent, electricity, fuel and other running costs')">
+    <x-page-header :description="__('Cash costs such as rent, meals, salary and electricity. Laboratory stock usage is recorded from Inventory.')">
         <x-slot:actions>
             <x-settings-back />
             <x-btn :href="route('finance.index')" variant="ghost">{{ __('Finance') }}</x-btn>
@@ -22,7 +22,7 @@
                     @foreach ($expenses as $expense)
                         <tr>
                             <td class="px-5 py-3"><a class="font-medium text-teal-800 dark:text-teal-300" href="{{ route('expenses.show', $expense) }}">{{ $expense->title }}</a></td>
-                            <td class="px-5 py-3">{{ __($expense->category) }}</td>
+                            <td class="px-5 py-3">{{ $expense->category->label() }}</td>
                             <td class="px-5 py-3">{{ number_format((float) $expense->amount, 2) }}</td>
                             <td class="px-5 py-3">{{ $expense->spent_on->toDateString() }}</td>
                             <td class="px-5 py-3">

@@ -13,10 +13,12 @@ class WorklistController extends Controller
     {
         $visits = Visit::query()
             ->with([
-                'patient.doctor',
-                'doctor',
-                'patientTests.test',
-                'testResults',
+                'patient:id,name,father_name,file_number,phone,gender,age,age_unit,doctor_id',
+                'patient.doctor:id,name',
+                'doctor:id,name',
+                'patientTests:id,visit_id,patient_id,test_id',
+                'patientTests.test:id,name',
+                'testResults:id,visit_id,patient_id,test_id',
             ])
             ->whereHas('patientTests')
             ->whereNot('status', VisitStatus::Delivered)

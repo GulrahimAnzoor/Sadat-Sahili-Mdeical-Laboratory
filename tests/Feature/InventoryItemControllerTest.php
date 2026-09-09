@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\LabPermission;
 use App\Models\InventoryCatalogItem;
 use App\Models\InventoryItem;
+use App\Models\StockMovement;
 use App\Models\Supplier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -94,6 +95,7 @@ class InventoryItemControllerTest extends TestCase
         $this->assertSame('Reagents', $items[1]->category);
         $this->assertDatabaseHas('inventory_catalog_items', ['name' => 'Reagents']);
         $this->assertDatabaseMissing('inventory_catalog_items', ['name' => 'EDTA tube']);
+        $this->assertSame(2, StockMovement::query()->where('type', 'in_manual')->count());
     }
 
     public function test_store_rejects_a_category_without_named_rows(): void

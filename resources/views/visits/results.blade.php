@@ -74,6 +74,38 @@
                     @endforeach
                 </div>
             </x-panel>
+
+            @foreach ($visit->patientTests as $patientTest)
+                @php
+                    $isActive = (int) $activeTestId === (int) $patientTest->id;
+                    $oldMaterials = $isActive ? old('results.0.materials') : null;
+                    $materialRows = $oldMaterials !== null
+                        ? collect($oldMaterials)
+                        : ($materialsByPatientTestId->get($patientTest->id) ?? collect())->map(fn ($movement) => [
+                            'inventory_item_id' => $movement->inventory_item_id,
+                            'quantity' => $movement->quantity,
+                            'item' => $movement->inventoryItem,
+                        ]);
+                @endphp
+                <div
+                    data-test-panel="{{ $patientTest->id }}"
+                    class="mt-6 {{ $isActive ? '' : 'hidden' }}"
+                >
+                    <x-panel :title="__('Materials used')">
+                        <x-slot:subtitle>{{ __('Search stock, pick an item, then enter how much was used.') }}</x-slot:subtitle>
+                        <input type="hidden" form="visit-result-form-{{ $patientTest->id }}" name="results[0][consume_materials]" value="1">
+                        @include('stock._picker', [
+                            'namePrefix' => 'results[0][materials]',
+                            'lots' => $stockLots,
+                            'rows' => $materialRows,
+                            'formId' => 'visit-result-form-'.$patientTest->id,
+                        ])
+                    </x-panel>
+                    @error('quantity')
+                        <p class="mt-2 text-sm text-red-700">{{ $message }}</p>
+                    @enderror
+                </div>
+            @endforeach
         </aside>
 
         <div class="lg:col-span-8 space-y-6">
@@ -90,7 +122,7 @@
                     aria-labelledby="test-tab-{{ $patientTest->id }}"
                     class="{{ $isActive ? '' : 'hidden' }}"
                 >
-                    <form method="POST" action="{{ route('visits.results.store', $visit) }}" class="lab-card overflow-hidden">
+                    <form method="POST" action="{{ route('visits.results.store', $visit) }}" id="visit-result-form-{{ $patientTest->id }}" class="lab-card overflow-hidden">
                         @csrf
                         <input type="hidden" name="results[0][patient_test_id]" value="{{ $patientTest->id }}">
                         <div class="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
@@ -191,38 +223,6 @@
                 </section>
             @endforeach
         </div>
-    </div>
-
-    <div class="mt-8 grid gap-6 lg:grid-cols-2">
-        <x-panel :title="__('Share')">
-            <div class="space-y-4 p-5">
-                <form method="POST" action="{{ route('visits.email', $visit) }}" class="flex flex-wrap gap-2">
-                    @csrf
-                    <input type="email" name="email" required placeholder="email@example.com" class="lab-input max-w-xs">
-                    <x-btn type="submit" variant="secondary" icon="mail">{{ __('Email') }}</x-btn>
-                </form>
-                @if ($visit->whatsappUrl())
-                    <x-btn :href="route('visits.whatsapp', $visit)" variant="emerald" icon="chat" target="_blank" rel="noopener">{{ __('WhatsApp') }}</x-btn>
-                @else
-                    <p class="text-sm text-slate-500">{{ __('This patient has no phone number for WhatsApp.') }}</p>
-                @endif
-            </div>
-        </x-panel>
-        <x-panel :title="__('Handover')">
-            <form method="POST" action="{{ route('visits.deliver', $visit) }}" class="space-y-3 p-5">
-                @csrf
-                <div>
-                    <label for="delivered_to" class="mb-1 block text-sm">{{ __('Delivered to') }}</label>
-                    <input id="delivered_to" name="delivered_to" value="{{ old('delivered_to', $visit->delivered_to) }}" required class="lab-input">
-                    @error('delivered_to')<p class="mt-1 text-sm text-red-700">{{ $message }}</p>@enderror
-                </div>
-                <div>
-                    <label for="delivery_box" class="mb-1 block text-sm">{{ __('Box / fridge') }}</label>
-                    <input id="delivery_box" name="delivery_box" value="{{ old('delivery_box', $visit->delivery_box) }}" class="lab-input">
-                </div>
-                <x-btn type="submit" icon="check">{{ __('Mark delivered') }}</x-btn>
-            </form>
-        </x-panel>
     </div>
 
     @push('scripts')

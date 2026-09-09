@@ -32,23 +32,14 @@ class FinanceController extends Controller
             ->withQueryString();
 
         $opening = $this->balanceBefore($from, $accountId);
-        $cashIn = (float) CashTransaction::query()
-            ->when($accountId, fn ($query) => $query->where('account_id', $accountId))
-            ->where('type', CashFlow::In)
-            ->whereBetween('created_at', [$from, $to])
-            ->sum('amount');
-        $cashOut = (float) CashTransaction::query()
-            ->when($accountId, fn ($query) => $query->where('account_id', $accountId))
-            ->where('type', CashFlow::Out)
-            ->whereBetween('created_at', [$from, $to])
-            ->sum('amount');
+        [$cashIn, $cashOut] = $this->cashTotals($from, $to, $accountId);
 
         return view('finance.index', [
             'period' => $period,
             'from' => $from,
             'to' => $to,
             'accountId' => $accountId,
-            'accounts' => Account::query()->orderBy('name')->get(),
+            'accounts' => Account::query()->orderBy('name')->get(['id', 'name']),
             'transactions' => $transactions,
             'opening' => $opening,
             'cashIn' => $cashIn,
@@ -65,16 +56,7 @@ class FinanceController extends Controller
         $summary = $this->summary($from, $to, $ledger);
         $accountId = $request->integer('account_id') ?: null;
         $opening = $this->balanceBefore($from, $accountId);
-        $cashIn = (float) CashTransaction::query()
-            ->when($accountId, fn ($query) => $query->where('account_id', $accountId))
-            ->where('type', CashFlow::In)
-            ->whereBetween('created_at', [$from, $to])
-            ->sum('amount');
-        $cashOut = (float) CashTransaction::query()
-            ->when($accountId, fn ($query) => $query->where('account_id', $accountId))
-            ->where('type', CashFlow::Out)
-            ->whereBetween('created_at', [$from, $to])
-            ->sum('amount');
+        [$cashIn, $cashOut] = $this->cashTotals($from, $to, $accountId);
 
         $filename = 'ssml-finance-'.$period.'-'.now()->format('Ymd').'.csv';
 
@@ -137,10 +119,31 @@ class FinanceController extends Controller
             ->when($accountId, fn ($builder) => $builder->where('account_id', $accountId))
             ->where('created_at', '<', $from);
 
-        $in = (float) (clone $query)->where('type', CashFlow::In)->sum('amount');
-        $out = (float) (clone $query)->where('type', CashFlow::Out)->sum('amount');
+        $row = $query
+            ->selectRaw(
+                'coalesce(sum(case when type = ? then amount else 0 end), 0) as cash_in, coalesce(sum(case when type = ? then amount else 0 end), 0) as cash_out',
+                [CashFlow::In->value, CashFlow::Out->value],
+            )
+            ->first();
 
-        return round($in - $out, 2);
+        return round((float) ($row?->cash_in ?? 0) - (float) ($row?->cash_out ?? 0), 2);
+    }
+
+    /**
+     * @return array{0: float, 1: float}
+     */
+    private function cashTotals(CarbonInterface $from, CarbonInterface $to, ?int $accountId): array
+    {
+        $row = CashTransaction::query()
+            ->when($accountId, fn ($query) => $query->where('account_id', $accountId))
+            ->whereBetween('created_at', [$from, $to])
+            ->selectRaw(
+                'coalesce(sum(case when type = ? then amount else 0 end), 0) as cash_in, coalesce(sum(case when type = ? then amount else 0 end), 0) as cash_out',
+                [CashFlow::In->value, CashFlow::Out->value],
+            )
+            ->first();
+
+        return [(float) ($row?->cash_in ?? 0), (float) ($row?->cash_out ?? 0)];
     }
 
     /**

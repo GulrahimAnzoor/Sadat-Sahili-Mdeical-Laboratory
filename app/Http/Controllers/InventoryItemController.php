@@ -6,22 +6,60 @@ use App\Http\Requests\StoreInventoryItemRequest;
 use App\Http\Requests\UpdateInventoryItemRequest;
 use App\Models\InventoryCatalogItem;
 use App\Models\InventoryItem;
+use App\Models\StockMovement;
 use App\Models\Supplier;
+use App\Services\StockLedger;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class InventoryItemController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $from = $request->date('from');
+        $to = $request->date('to');
+
+        $items = InventoryItem::query()
+            ->with('supplier:id,name')
+            ->orderBy('category')
+            ->orderBy('name')
+            ->orderByDesc('id')
+            ->paginate(20)
+            ->withQueryString();
+
+        $movementTotals = StockMovement::query()
+            ->occurredBetween($from, $to)
+            ->whereIn('inventory_item_id', $items->pluck('id'))
+            ->selectRaw('inventory_item_id, type, sum(quantity) as total')
+            ->groupBy('inventory_item_id', 'type')
+            ->get()
+            ->groupBy('inventory_item_id');
+
+        $items->getCollection()->each(function (InventoryItem $item) use ($movementTotals): void {
+            $rows = $movementTotals->get($item->id, collect());
+            $item->received_qty = (float) $rows->filter(
+                fn (StockMovement $row): bool => $row->type->isInbound(),
+            )->sum('total');
+            $item->consumed_qty = (float) $rows->filter(
+                fn (StockMovement $row): bool => ! $row->type->isInbound(),
+            )->sum('total');
+        });
+
+        $movementQuery = StockMovement::query()->occurredBetween($from, $to);
+
         return view('inventory.index', [
-            'items' => InventoryItem::query()
-                ->with('supplier')
-                ->orderBy('category')
-                ->orderBy('name')
-                ->orderByDesc('id')
-                ->paginate(20),
+            'items' => $items,
+            'from' => $from?->toDateString(),
+            'to' => $to?->toDateString(),
+            'received' => (float) (clone $movementQuery)->inbound()->sum('quantity'),
+            'consumed' => (float) (clone $movementQuery)->outbound()->sum('quantity'),
+            'onHand' => (float) InventoryItem::query()->sum('quantity'),
+            'expiring' => InventoryItem::query()
+                ->whereNotNull('expires_on')
+                ->whereDate('expires_on', '<=', now()->addDays(30))
+                ->count(),
         ]);
     }
 
@@ -45,15 +83,17 @@ class InventoryItemController extends Controller
         ]);
     }
 
-    public function store(StoreInventoryItemRequest $request): RedirectResponse
+    public function store(StoreInventoryItemRequest $request, StockLedger $stock): RedirectResponse
     {
         $validated = $request->validated();
 
-        $count = DB::transaction(function () use ($validated): int {
+        $count = DB::transaction(function () use ($validated, $stock): int {
             InventoryCatalogItem::query()->firstOrCreate(['name' => $validated['category']]);
 
+            $saved = 0;
+
             foreach ($validated['lots'] as $lot) {
-                InventoryItem::query()->create([
+                $item = InventoryItem::query()->create([
                     'name' => $lot['name'],
                     'category' => $validated['category'],
                     'quantity' => $lot['quantity'],
@@ -64,9 +104,12 @@ class InventoryItemController extends Controller
                     'supplier_id' => $validated['supplier_id'],
                     'received_on' => $validated['received_on'],
                 ]);
+
+                $stock->recordManualReceipt($item);
+                $saved++;
             }
 
-            return count($validated['lots']);
+            return $saved;
         });
 
         return redirect()
@@ -79,7 +122,10 @@ class InventoryItemController extends Controller
 
     public function show(InventoryItem $inventoryItem): View
     {
-        $inventoryItem->load('supplier');
+        $inventoryItem->load([
+            'supplier:id,name',
+            'movements' => fn ($query) => $query->latest('occurred_on')->latest('id')->limit(50),
+        ]);
 
         return view('inventory.show', ['item' => $inventoryItem]);
     }

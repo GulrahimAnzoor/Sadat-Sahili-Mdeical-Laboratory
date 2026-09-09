@@ -105,6 +105,10 @@ class VisitResultControllerTest extends TestCase
             ->assertSee('4.0-11.0')
             ->assertSee('x10^3/µL')
             ->assertSee('Save result')
+            ->assertSee('Materials used')
+            ->assertSee('Add from stock')
+            ->assertDontSee('Share')
+            ->assertDontSee('Handover')
             ->assertSee('Add row')
             ->assertSee('Units')
             ->assertSee('Normal range');

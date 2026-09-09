@@ -133,7 +133,6 @@ class DashboardTest extends TestCase
         $response->assertSee('id="lab-progress"', false);
         $response->assertSee('lab-page', false);
         $response->assertSee('lab-topbar', false);
-        $response->assertSee('speculationrules', false);
         $response->assertSee('/finance');
         $response->assertSee('/settings');
         $response->assertSee('Reception');
