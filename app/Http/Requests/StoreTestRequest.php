@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\TestDepartment;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -22,7 +21,7 @@ class StoreTestRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'code' => ['nullable', 'string', 'max:50'],
-            'department' => ['nullable', Rule::enum(TestDepartment::class)],
+            'department' => ['nullable', 'string', Rule::exists('departments', 'slug')],
             'price' => ['required', 'numeric', 'min:0'],
             'normal_range' => ['required', 'string', 'max:20000'],
             'is_active' => ['sometimes', 'boolean'],

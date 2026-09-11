@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Test;
 use App\Models\TestParameter;
+use App\Models\TestResultValue;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -39,5 +40,19 @@ class TestParameterControllerTest extends TestCase
 
         $response->assertRedirect(route('tests.show', $test));
         $this->assertModelMissing($parameter);
+    }
+
+    public function test_destroy_rejects_a_parameter_used_on_a_result(): void
+    {
+        $test = Test::factory()->create();
+        $parameter = TestParameter::factory()->for($test)->create(['name' => 'WBC']);
+        TestResultValue::factory()->for($parameter, 'parameter')->create();
+
+        $response = $this->from(route('tests.show', $test))
+            ->delete(route('tests.parameters.destroy', [$test, $parameter]));
+
+        $response->assertRedirect(route('tests.show', $test));
+        $response->assertSessionHasErrors('parameter');
+        $this->assertModelExists($parameter);
     }
 }

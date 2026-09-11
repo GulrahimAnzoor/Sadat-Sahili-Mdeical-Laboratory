@@ -2,11 +2,15 @@
 
 namespace App\Support;
 
+use App\Enums\VisitStatus;
 use App\Models\Account;
 use App\Models\Doctor;
 use App\Models\Patient;
+use App\Models\PatientTest;
 use App\Models\Supplier;
 use App\Models\Test;
+use App\Models\TestParameter;
+use App\Models\Visit;
 use Illuminate\Validation\ValidationException;
 
 class RecordGuard
@@ -31,11 +35,54 @@ class RecordGuard
 
     public function ensureTestCanBeDeleted(Test $test): void
     {
-        if ($test->patientTests()->exists() || $test->testResults()->exists()) {
+        if ($test->testResults()->exists()) {
             throw ValidationException::withMessages([
                 'test' => __('This test has been used on patient records and cannot be deleted.'),
             ]);
         }
+
+        $assignments = $test->patientTests()->with('visit')->get();
+
+        foreach ($assignments as $assignment) {
+            if ($this->assignmentIsHistorical($assignment)) {
+                throw ValidationException::withMessages([
+                    'test' => __('This test has been used on patient records and cannot be deleted.'),
+                ]);
+            }
+        }
+    }
+
+    public function ensurePatientTestCanBeDeleted(PatientTest $patientTest): void
+    {
+        if ($this->assignmentIsHistorical($patientTest)) {
+            throw ValidationException::withMessages([
+                'patient_test' => __('This assigned test is billed or completed and cannot be deleted.'),
+            ]);
+        }
+    }
+
+    public function ensureTestParameterCanBeDeleted(TestParameter $parameter): void
+    {
+        if ($parameter->resultValues()->exists()) {
+            throw ValidationException::withMessages([
+                'parameter' => __('This test information is used on recorded results and cannot be deleted.'),
+            ]);
+        }
+    }
+
+    private function assignmentIsHistorical(PatientTest $patientTest): bool
+    {
+        if ($patientTest->paid) {
+            return true;
+        }
+
+        $visit = $patientTest->visit;
+
+        return $visit instanceof Visit && in_array($visit->status, [
+            VisitStatus::Paid,
+            VisitStatus::Completed,
+            VisitStatus::Delivered,
+        ], true);
     }
 
     public function ensureAccountCanBeDeleted(Account $account): void

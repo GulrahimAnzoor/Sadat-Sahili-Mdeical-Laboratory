@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\PatientTest;
 use App\Models\Test;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -90,5 +91,35 @@ class TestControllerTest extends TestCase
 
         $response->assertRedirect(route('tests.index'));
         $this->assertModelMissing($test);
+    }
+
+    public function test_destroy_deletes_a_test_with_parameters(): void
+    {
+        $test = Test::factory()->create();
+        $parameter = $test->parameters()->create([
+            'name' => 'Hb',
+            'unit' => 'g/dL',
+            'normal_range' => '12-16',
+        ]);
+
+        $response = $this->delete(route('tests.destroy', $test));
+
+        $response->assertRedirect(route('tests.index'));
+        $this->assertModelMissing($test);
+        $this->assertDatabaseMissing('test_parameters', ['id' => $parameter->id]);
+    }
+
+    public function test_destroy_removes_unpaid_visit_assignments(): void
+    {
+        $test = Test::factory()->create();
+        $patientTest = PatientTest::factory()->for($test)->create([
+            'paid' => false,
+        ]);
+
+        $response = $this->delete(route('tests.destroy', $test));
+
+        $response->assertRedirect(route('tests.index'));
+        $this->assertModelMissing($test);
+        $this->assertModelMissing($patientTest);
     }
 }

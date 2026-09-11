@@ -65,7 +65,7 @@ class FlashBannerTest extends TestCase
             ->assertJsonPath('message', 'Discount saved.');
     }
 
-    public function test_failed_create_shows_that_the_action_could_not_be_completed(): void
+    public function test_failed_create_shows_the_first_validation_error(): void
     {
         $this->from(route('doctors.create'))
             ->followingRedirects()
@@ -73,6 +73,6 @@ class FlashBannerTest extends TestCase
                 'name' => '',
             ])
             ->assertOk()
-            ->assertSee('The action could not be completed.');
+            ->assertSee('The name field is required.');
     }
 }

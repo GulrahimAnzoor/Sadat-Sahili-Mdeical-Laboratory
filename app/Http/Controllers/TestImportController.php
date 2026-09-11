@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\TestDepartment;
 use App\Http\Requests\ImportTestsRequest;
+use App\Models\Department;
 use App\Models\Test;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
@@ -71,7 +72,7 @@ class TestImportController extends Controller
                 continue;
             }
 
-            $department = TestDepartment::tryFrom($record['department'] ?? '') ?? TestDepartment::Routine;
+            $department = $this->departmentSlug($record['department'] ?? '');
             $attributes = [
                 'code' => ($record['code'] ?? '') !== '' ? $record['code'] : null,
                 'department' => $department,
@@ -108,5 +109,23 @@ class TestImportController extends Controller
                 'created' => $created,
                 'updated' => $updated,
             ]));
+    }
+
+    private function departmentSlug(string $value): string
+    {
+        $enum = TestDepartment::tryFrom($value);
+
+        if ($enum !== null) {
+            return $enum->value;
+        }
+
+        $department = Department::query()
+            ->where(function ($query) use ($value): void {
+                $query->where('slug', $value)
+                    ->orWhere('name', $value);
+            })
+            ->first();
+
+        return $department?->slug ?? TestDepartment::Routine->value;
     }
 }

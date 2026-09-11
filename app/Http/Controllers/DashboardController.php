@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Enums\CashFlow;
-use App\Enums\TestDepartment;
 use App\Models\CashTransaction;
+use App\Models\Department;
 use App\Models\Patient;
 use App\Models\PatientTest;
 use App\Models\Visit;
@@ -57,7 +57,7 @@ class DashboardController extends Controller
             ->orderByDesc('total')
             ->get()
             ->map(fn (object $row): array => [
-                'label' => TestDepartment::tryFrom((string) $row->department)?->label() ?? (string) $row->department,
+                'label' => Department::resolve((string) $row->department)->label(),
                 'total' => (int) $row->total,
             ]);
 

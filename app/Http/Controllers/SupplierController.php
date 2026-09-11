@@ -6,7 +6,9 @@ use App\Http\Requests\StoreSupplierRequest;
 use App\Http\Requests\UpdateSupplierRequest;
 use App\Models\Supplier;
 use App\Support\RecordGuard;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class SupplierController extends Controller
@@ -60,7 +62,13 @@ class SupplierController extends Controller
     {
         $guard->ensureSupplierCanBeDeleted($supplier);
 
-        $supplier->delete();
+        try {
+            $supplier->delete();
+        } catch (QueryException) {
+            throw ValidationException::withMessages([
+                'supplier' => __('This supplier has purchase records and cannot be deleted.'),
+            ]);
+        }
 
         return redirect()
             ->route('suppliers.index')

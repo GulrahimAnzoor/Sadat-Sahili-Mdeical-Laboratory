@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\TestDepartment;
+use App\Casts\AsDepartment;
 use Database\Factories\TestFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -44,7 +44,7 @@ class Test extends Model
         return [
             'price' => 'decimal:2',
             'is_active' => 'boolean',
-            'department' => TestDepartment::class,
+            'department' => AsDepartment::class,
         ];
     }
 

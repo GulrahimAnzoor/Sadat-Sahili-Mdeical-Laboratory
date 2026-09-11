@@ -6,7 +6,9 @@ use App\Http\Requests\StoreDoctorRequest;
 use App\Http\Requests\UpdateDoctorRequest;
 use App\Models\Doctor;
 use App\Support\RecordGuard;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class DoctorController extends Controller
@@ -60,7 +62,13 @@ class DoctorController extends Controller
     {
         $guard->ensureDoctorCanBeDeleted($doctor);
 
-        $doctor->delete();
+        try {
+            $doctor->delete();
+        } catch (QueryException) {
+            throw ValidationException::withMessages([
+                'doctor' => __('This doctor is linked to laboratory records and cannot be deleted.'),
+            ]);
+        }
 
         return redirect()
             ->route('doctors.index')

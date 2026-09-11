@@ -73,7 +73,7 @@ class PatientTestControllerTest extends TestCase
 
     public function test_destroy_deletes_assignment(): void
     {
-        $patientTest = PatientTest::factory()->create();
+        $patientTest = PatientTest::factory()->create(['paid' => false]);
 
         $response = $this->delete(route('patient-tests.destroy', $patientTest));
 

@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\CashTransactionController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\FinanceController;
@@ -95,6 +96,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::middleware('can:'.LabPermission::Tests->value)->group(function () {
+        Route::post('departments', [DepartmentController::class, 'store'])->name('departments.store');
         Route::resource('tests', TestController::class);
         Route::get('tests-import/template', [TestImportController::class, 'template'])->name('tests.import.template');
         Route::post('tests-import', [TestImportController::class, 'store'])->name('tests.import');

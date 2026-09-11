@@ -4,6 +4,11 @@
             <x-btn :href="route('patient-tests.create', ['test_id' => $test->id])" icon="flask">{{ __('Assign to patient') }}</x-btn>
             <x-btn :href="route('settings.test-reports.edit', $test)" variant="secondary" icon="report">{{ __('Range and summary') }}</x-btn>
             <x-btn :href="route('tests.edit', $test)" variant="secondary" icon="edit">{{ __('Edit') }}</x-btn>
+            <form method="POST" action="{{ route('tests.destroy', $test) }}">
+                @csrf
+                @method('DELETE')
+                <x-btn type="submit" variant="danger" icon="trash">{{ __('Delete') }}</x-btn>
+            </form>
             <x-btn :href="route('tests.index')" variant="ghost" icon="back">{{ __('Back') }}</x-btn>
         </x-slot:actions>
     </x-page-header>

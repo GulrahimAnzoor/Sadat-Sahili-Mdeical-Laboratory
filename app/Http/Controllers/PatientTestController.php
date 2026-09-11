@@ -11,8 +11,12 @@ use App\Models\Test;
 use App\Models\TestResult;
 use App\Models\Visit;
 use App\Support\CashLedger;
+use App\Support\RecordGuard;
+use App\Support\VisitBilling;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class PatientTestController extends Controller
@@ -156,9 +160,25 @@ class PatientTestController extends Controller
             ->with('success', __('Assigned test updated.'));
     }
 
-    public function destroy(PatientTest $patientTest): RedirectResponse
+    public function destroy(PatientTest $patientTest, RecordGuard $guard, VisitBilling $billing): RedirectResponse
     {
-        $patientTest->delete();
+        $patientTest->load('visit');
+        $guard->ensurePatientTestCanBeDeleted($patientTest);
+
+        try {
+            DB::transaction(function () use ($patientTest, $billing): void {
+                $visit = $patientTest->visit;
+                $patientTest->delete();
+
+                if ($visit !== null) {
+                    $billing->recalculate($visit);
+                }
+            });
+        } catch (QueryException) {
+            throw ValidationException::withMessages([
+                'patient_test' => __('This assigned test is billed or completed and cannot be deleted.'),
+            ]);
+        }
 
         return redirect()
             ->route('patient-tests.index')

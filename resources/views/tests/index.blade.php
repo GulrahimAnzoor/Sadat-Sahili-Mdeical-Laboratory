@@ -6,16 +6,28 @@
         </x-slot:actions>
     </x-page-header>
 
-    <form method="GET" class="mb-4 flex flex-wrap gap-2">
-        <input type="search" name="q" value="{{ request('q') }}" placeholder="{{ __('Search tests') }}" class="lab-input max-w-xs">
-        <select name="department" class="lab-input max-w-xs">
-            <option value="">{{ __('All departments') }}</option>
-            @foreach ($departments as $department)
-                <option value="{{ $department->value }}" @selected(request('department') === $department->value)>{{ $department->label() }}</option>
-            @endforeach
-        </select>
-        <x-btn type="submit" variant="secondary" icon="search">{{ __('Search') }}</x-btn>
-    </form>
+    <div class="mb-4 flex flex-wrap items-start gap-2">
+        <form method="GET" class="flex flex-wrap gap-2">
+            <input type="search" name="q" value="{{ request('q') }}" placeholder="{{ __('Search tests') }}" class="lab-input max-w-xs">
+            <select name="department" class="lab-input max-w-xs">
+                <option value="">{{ __('All departments') }}</option>
+                @foreach ($departments as $department)
+                    <option value="{{ $department->value }}" @selected(request('department') === $department->value)>{{ $department->label() }}</option>
+                @endforeach
+            </select>
+            <x-btn type="submit" variant="secondary" icon="search">{{ __('Search') }}</x-btn>
+        </form>
+        <form method="POST" action="{{ route('departments.store') }}" class="flex flex-wrap items-start gap-2">
+            @csrf
+            <div>
+                <input type="text" name="name" value="{{ old('name') }}" required maxlength="255" placeholder="{{ __('New department') }}" class="lab-input max-w-xs">
+                @error('name')
+                    <p class="mt-1 text-sm text-red-700">{{ $message }}</p>
+                @enderror
+            </div>
+            <x-btn type="submit" variant="teal" icon="plus">{{ __('Add department') }}</x-btn>
+        </form>
+    </div>
 
     <x-panel>
         @if ($tests->isEmpty())

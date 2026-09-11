@@ -51,7 +51,7 @@ class TestImportControllerTest extends TestCase
         $this->assertSame('CBC', $cbc?->name);
         $this->assertSame('250.00', $cbc?->price);
         $this->assertSame('TFT', $tft?->name);
-        $this->assertSame(TestDepartment::SpecialChemistry, $tft?->department);
+        $this->assertSame(TestDepartment::SpecialChemistry->value, $tft?->department->value);
         $this->assertSame(2, Test::query()->count());
     }
 

@@ -106,7 +106,11 @@ class TestResultController extends Controller
 
     public function destroy(TestResult $testResult): RedirectResponse
     {
-        $testResult->delete();
+        DB::transaction(function () use ($testResult): void {
+            $testResult->values()->delete();
+            $testResult->sensitivities()->delete();
+            $testResult->delete();
+        });
 
         return redirect()
             ->route('test-results.index')

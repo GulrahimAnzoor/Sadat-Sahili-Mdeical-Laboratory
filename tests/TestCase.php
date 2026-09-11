@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use App\Models\Department;
 use App\Models\Role;
 use App\Models\Staff;
 use App\Models\User;
@@ -17,6 +18,8 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
 
         $this->withoutVite();
+
+        Department::flushCatalog();
 
         if ($this->authenticateAsManager && in_array(RefreshDatabase::class, class_uses_recursive($this), true)) {
             $this->actingAs($this->manager());

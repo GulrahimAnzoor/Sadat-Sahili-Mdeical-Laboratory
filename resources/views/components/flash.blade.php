@@ -2,7 +2,7 @@
     $success = session('success');
     $error = session('error');
     $failed = $success === null && $error === null && $errors->any();
-    $message = $success ?? $error ?? ($failed ? __('The action could not be completed.') : null);
+    $message = $success ?? $error ?? ($failed ? ($errors->first() ?: __('The action could not be completed.')) : null);
     $tone = $success ? 'success' : (($error || $failed) ? 'error' : 'success');
     $title = $tone === 'error' ? __('Error') : __('Success');
     $panelBase = 'pointer-events-auto lab-toast overflow-hidden rounded-2xl border shadow-xl';

@@ -6,6 +6,7 @@ use App\Models\Doctor;
 use App\Models\Patient;
 use App\Models\PatientTest;
 use App\Models\Test;
+use App\Models\TestResult;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -29,7 +30,7 @@ class RecordIntegrityTest extends TestCase
 
     public function test_test_used_on_a_visit_cannot_be_deleted(): void
     {
-        $patientTest = PatientTest::factory()->create();
+        $patientTest = PatientTest::factory()->create(['paid' => true]);
         $test = $patientTest->test;
 
         $this->from(route('tests.index'))
@@ -39,6 +40,20 @@ class RecordIntegrityTest extends TestCase
 
         $this->assertModelExists($test);
         $this->assertModelExists($patientTest);
+    }
+
+    public function test_test_with_a_recorded_result_cannot_be_deleted(): void
+    {
+        $result = TestResult::factory()->create();
+        $test = $result->test;
+
+        $this->from(route('tests.index'))
+            ->delete(route('tests.destroy', $test))
+            ->assertRedirect(route('tests.index'))
+            ->assertSessionHasErrors('test');
+
+        $this->assertModelExists($test);
+        $this->assertModelExists($result);
     }
 
     public function test_doctor_linked_to_a_patient_cannot_be_deleted(): void
