@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Casts\AsDepartment;
+use App\Enums\ReportLayout;
 use Database\Factories\TestFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -19,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'price',
     'normal_range',
     'is_active',
+    'report_layout',
     'interpretation',
     'clinical_utility',
     'method',
@@ -34,6 +36,7 @@ class Test extends Model
     protected $attributes = [
         'department' => 'routine',
         'is_active' => true,
+        'report_layout' => 'standard',
     ];
 
     /**
@@ -45,6 +48,7 @@ class Test extends Model
             'price' => 'decimal:2',
             'is_active' => 'boolean',
             'department' => AsDepartment::class,
+            'report_layout' => ReportLayout::class,
         ];
     }
 
@@ -74,5 +78,15 @@ class Test extends Model
     public function parameters(): HasMany
     {
         return $this->hasMany(TestParameter::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function usesSpecialReportLayout(): bool
+    {
+        return ($this->report_layout ?? ReportLayout::Standard)->isSpecial();
+    }
+
+    public function hidesStandardTitle(): bool
+    {
+        return ($this->report_layout ?? ReportLayout::Standard)->hidesStandardTitle();
     }
 }

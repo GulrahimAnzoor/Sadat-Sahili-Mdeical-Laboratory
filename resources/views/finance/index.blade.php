@@ -2,6 +2,7 @@
     <x-page-header :description="__('Cash ledger with opening and closing balances, plus PNL from visits, purchases and expenses.')">
         <x-slot:actions>
             <x-btn :href="route('dashboard')" variant="ghost" icon="back">{{ __('Dashboard') }}</x-btn>
+            <x-btn :href="route('finance.period-report', ['period' => in_array($period, ['today', 'week', 'month'], true) ? $period : 'month'])" variant="secondary" icon="print">{{ __('Period report') }}</x-btn>
             <x-btn :href="route('finance.export', ['period' => $period, 'account_id' => $accountId])" variant="secondary" icon="report">{{ __('Excel / CSV') }}</x-btn>
             <x-btn :href="route('purchases.index')" variant="ghost" icon="cart">{{ __('Purchases') }}</x-btn>
             <x-btn :href="route('expenses.index')" variant="ghost" icon="pay">{{ __('Expenses') }}</x-btn>

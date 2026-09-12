@@ -134,6 +134,30 @@
                         </div>
 
                         <div class="space-y-4 p-5">
+                            @if (in_array($patientTest->test?->report_layout, [\App\Enums\ReportLayout::UrineExam, \App\Enums\ReportLayout::StoolExam], true))
+                                @include('visits.partials.result-urine-form', [
+                                    'parameters' => $parameters,
+                                    'saved' => $saved,
+                                    'test' => $patientTest->test,
+                                ])
+                            @elseif ($patientTest->test?->report_layout === \App\Enums\ReportLayout::TorchPanel)
+                                @include('visits.partials.result-torch-form', [
+                                    'parameters' => $parameters,
+                                    'saved' => $saved,
+                                ])
+                            @elseif ($patientTest->test?->report_layout === \App\Enums\ReportLayout::Culture)
+                                @include('visits.partials.result-culture-form', [
+                                    'parameters' => $parameters,
+                                    'saved' => $saved,
+                                    'test' => $patientTest->test,
+                                ])
+                            @elseif ($patientTest->test?->report_layout === \App\Enums\ReportLayout::Panel)
+                                @include('visits.partials.result-panel-form', [
+                                    'parameters' => $parameters,
+                                    'saved' => $saved,
+                                    'test' => $patientTest->test,
+                                ])
+                            @else
                             <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
                                 <table class="min-w-full text-sm">
                                     <thead>
@@ -208,6 +232,7 @@
                                 <x-btn type="button" variant="secondary" size="sm" icon="plus" data-add-row>{{ __('Add row') }}</x-btn>
                                 <p class="text-xs text-slate-500">{{ __('If this test has several results, add a row for each one.') }}</p>
                             </div>
+                            @endif
 
                             @if (filled($patientTest->test?->interpretation))
                                 <div class="rounded-xl border border-dashed border-slate-200 px-4 py-3 text-sm leading-6 text-slate-600 dark:border-slate-700 dark:text-slate-300">
@@ -266,27 +291,47 @@
         document.querySelectorAll('[data-add-row]').forEach((button) => {
             button.addEventListener('click', () => {
                 const form = button.closest('form');
-                const container = form?.querySelector('[data-result-rows]');
-                const template = form?.querySelector('[data-extra-row-template]');
+                const group = button.closest('[data-row-group]');
+                const container = group?.querySelector('[data-result-rows]') ?? form?.querySelector('[data-result-rows]');
+                const template = group?.querySelector('[data-extra-row-template]') ?? form?.querySelector('[data-extra-row-template]');
 
                 if (! container || ! template) {
                     return;
                 }
 
-                const index = container.querySelectorAll('[data-extra-row]').length;
+                const index = form?.querySelectorAll('[data-extra-row]').length ?? container.querySelectorAll('[data-extra-row]').length;
                 const html = template.innerHTML.replaceAll('__INDEX__', String(index));
                 container.insertAdjacentHTML('beforeend', html);
             });
         });
 
         document.addEventListener('click', (event) => {
-            const button = event.target instanceof Element ? event.target.closest('[data-remove-row]') : null;
+            const removeResult = event.target instanceof Element ? event.target.closest('[data-remove-row]') : null;
 
-            if (! button) {
-                return;
+            if (removeResult) {
+                removeResult.closest('[data-extra-row]')?.remove();
             }
 
-            button.closest('[data-extra-row]')?.remove();
+            const removeSensitivity = event.target instanceof Element ? event.target.closest('[data-remove-sensitivity]') : null;
+
+            if (removeSensitivity) {
+                removeSensitivity.closest('[data-sensitivity-row]')?.remove();
+            }
+        });
+
+        document.querySelectorAll('[data-add-sensitivity]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const group = button.closest('[data-sensitivity-group]');
+                const container = group?.querySelector('[data-sensitivity-rows]');
+                const template = group?.querySelector('[data-sensitivity-template]');
+
+                if (! container || ! template) {
+                    return;
+                }
+
+                const index = container.querySelectorAll('[data-sensitivity-row]').length;
+                container.insertAdjacentHTML('beforeend', template.innerHTML.replaceAll('__INDEX__', String(index)));
+            });
         });
     </script>
     @endpush

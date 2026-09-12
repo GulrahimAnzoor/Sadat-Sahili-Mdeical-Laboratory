@@ -37,12 +37,16 @@
                                     <div class="lab-actions">
                                         <x-btn :href="route('test-results.show', $testResult)" size="sm" variant="teal" icon="eye">{{ __('View') }}</x-btn>
                                         <x-btn :href="route('reports.show', $testResult->patient)" size="sm" variant="sky" icon="report">{{ __('Report') }}</x-btn>
-                                        <x-btn :href="route('test-results.edit', $testResult)" size="sm" variant="slate" icon="edit">{{ __('Edit') }}</x-btn>
-                                        <form method="POST" action="{{ route('test-results.destroy', $testResult) }}">
-                                            @csrf
-                                            @method('DELETE')
-                                            <x-btn type="submit" size="sm" variant="danger" icon="trash">{{ __('Delete') }}</x-btn>
-                                        </form>
+                                        @can('records.edit')
+                                            <x-btn :href="route('test-results.edit', $testResult)" size="sm" variant="slate" icon="edit">{{ __('Edit') }}</x-btn>
+                                        @endcan
+                                        @can('records.delete')
+                                            <form method="POST" action="{{ route('test-results.destroy', $testResult) }}">
+                                                @csrf
+                                                @method('DELETE')
+                                                <x-btn type="submit" size="sm" variant="danger" icon="trash">{{ __('Delete') }}</x-btn>
+                                            </form>
+                                        @endcan
                                     </div>
                                 </td>
                             </tr>

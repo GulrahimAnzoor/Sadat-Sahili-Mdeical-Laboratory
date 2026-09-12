@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\TestDepartment;
 use App\Models\Test;
 use App\Support\LabCatalogue;
+use App\Support\LabPanelTemplates;
 use Illuminate\Database\Seeder;
 
 class TestSeeder extends Seeder
@@ -77,16 +78,20 @@ class TestSeeder extends Seeder
             ]);
         }
 
-        $urine = Test::query()->firstWhere('name', 'Urine R/E');
-        if ($urine !== null && $urine->parameters()->doesntExist()) {
-            $urine->parameters()->createMany([
-                ['name' => 'Color', 'group_name' => 'CHEMICAL EXAMINATION', 'sort_order' => 1],
-                ['name' => 'Appearance', 'group_name' => 'CHEMICAL EXAMINATION', 'sort_order' => 2],
-                ['name' => 'Protein', 'group_name' => 'CHEMICAL EXAMINATION', 'normal_range' => 'Negative', 'sort_order' => 3],
-                ['name' => 'Glucose', 'group_name' => 'CHEMICAL EXAMINATION', 'normal_range' => 'Negative', 'sort_order' => 4],
-                ['name' => 'WBC', 'group_name' => 'MICROSCOPIC EXAMINATION', 'normal_range' => '0-5 /HPF', 'sort_order' => 5],
-                ['name' => 'RBC', 'group_name' => 'MICROSCOPIC EXAMINATION', 'normal_range' => '0-2 /HPF', 'sort_order' => 6],
-            ]);
+        foreach (LabPanelTemplates::panels() as $panel) {
+            $test = Test::query()->firstWhere('name', $panel['name']);
+
+            if ($test === null) {
+                continue;
+            }
+
+            LabPanelTemplates::sync(
+                $test,
+                $panel['layout'],
+                $panel['interpretation'],
+                $panel['parameters'],
+                $panel['activate'],
+            );
         }
     }
 }

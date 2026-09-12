@@ -14,18 +14,21 @@ class RecordIntegrityTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_patient_with_tests_cannot_be_deleted(): void
+    public function test_patient_with_tests_is_deleted_with_laboratory_records(): void
     {
         $patientTest = PatientTest::factory()->create();
         $patient = $patientTest->patient;
+        $visit = $patientTest->visit;
 
         $this->from(route('patients.index'))
             ->delete(route('patients.destroy', $patient))
             ->assertRedirect(route('patients.index'))
-            ->assertSessionHasErrors('patient');
+            ->assertSessionHas('success', 'Patient deleted.');
 
-        $this->assertModelExists($patient);
-        $this->assertModelExists($patientTest);
+        $this->assertModelMissing($patient);
+        $this->assertModelMissing($patientTest);
+        $this->assertNotNull($visit);
+        $this->assertModelMissing($visit);
     }
 
     public function test_test_used_on_a_visit_cannot_be_deleted(): void

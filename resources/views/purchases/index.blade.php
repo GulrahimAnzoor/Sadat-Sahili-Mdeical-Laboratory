@@ -30,12 +30,16 @@
                             <td class="px-5 py-3">
                                 <div class="lab-actions">
                                     <x-btn :href="route('purchases.show', $purchase)" size="sm" variant="teal" icon="eye">{{ __('View') }}</x-btn>
-                                    <x-btn :href="route('purchases.edit', $purchase)" size="sm" variant="slate" icon="edit">{{ __('Edit') }}</x-btn>
-                                    <form method="POST" action="{{ route('purchases.destroy', $purchase) }}">
-                                        @csrf
-                                        @method('DELETE')
-                                        <x-btn type="submit" size="sm" variant="danger" icon="trash">{{ __('Delete') }}</x-btn>
-                                    </form>
+                                    @can('records.edit')
+                                        <x-btn :href="route('purchases.edit', $purchase)" size="sm" variant="slate" icon="edit">{{ __('Edit') }}</x-btn>
+                                    @endcan
+                                    @can('records.delete')
+                                        <form method="POST" action="{{ route('purchases.destroy', $purchase) }}">
+                                            @csrf
+                                            @method('DELETE')
+                                            <x-btn type="submit" size="sm" variant="danger" icon="trash">{{ __('Delete') }}</x-btn>
+                                        </form>
+                                    @endcan
                                 </div>
                             </td>
                         </tr>

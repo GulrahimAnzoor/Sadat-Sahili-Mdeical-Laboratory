@@ -4,24 +4,49 @@ namespace App\Support;
 
 use App\Enums\VisitStatus;
 use App\Models\Account;
+use App\Models\CashTransaction;
+use App\Models\CultureSensitivity;
 use App\Models\Doctor;
 use App\Models\Patient;
 use App\Models\PatientTest;
+use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Models\Test;
 use App\Models\TestParameter;
+use App\Models\TestResult;
+use App\Models\TestResultValue;
 use App\Models\Visit;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class RecordGuard
 {
-    public function ensurePatientCanBeDeleted(Patient $patient): void
+    public function deletePatient(Patient $patient): void
     {
-        if ($patient->patientTests()->exists() || $patient->testResults()->exists() || $patient->visits()->exists()) {
-            throw ValidationException::withMessages([
-                'patient' => __('This patient has laboratory records and cannot be deleted.'),
-            ]);
-        }
+        DB::transaction(function () use ($patient): void {
+            $visitIds = $patient->visits()->pluck('id');
+            $resultIds = $patient->testResults()->pluck('id');
+
+            if ($resultIds->isNotEmpty()) {
+                CultureSensitivity::query()->whereIn('test_result_id', $resultIds)->delete();
+                TestResultValue::query()->whereIn('test_result_id', $resultIds)->delete();
+                TestResult::query()->whereIn('id', $resultIds)->delete();
+            }
+
+            if ($visitIds->isNotEmpty()) {
+                StockMovement::query()->whereIn('visit_id', $visitIds)->update([
+                    'visit_id' => null,
+                    'patient_test_id' => null,
+                ]);
+                CashTransaction::query()->whereIn('visit_id', $visitIds)->update([
+                    'visit_id' => null,
+                ]);
+            }
+
+            PatientTest::query()->where('patient_id', $patient->id)->delete();
+            Visit::query()->where('patient_id', $patient->id)->delete();
+            $patient->delete();
+        });
     }
 
     public function ensureDoctorCanBeDeleted(Doctor $doctor): void

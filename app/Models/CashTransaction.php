@@ -53,6 +53,14 @@ class CashTransaction extends Model
         return $this->type === CashFlow::Out ? -$amount : $amount;
     }
 
+    public function partyLabel(): string
+    {
+        return $this->visit?->patient?->name
+            ?? $this->expense?->title
+            ?? $this->purchase?->supplier?->name
+            ?? ($this->description ?: '—');
+    }
+
     public function sourceUrl(): ?string
     {
         if ($this->visit_id !== null) {

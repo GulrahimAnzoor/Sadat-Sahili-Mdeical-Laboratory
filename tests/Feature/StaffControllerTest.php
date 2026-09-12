@@ -162,4 +162,56 @@ class StaffControllerTest extends TestCase
 
         $this->assertModelMissing($staff);
     }
+
+    public function test_updating_staff_changes_name_and_role(): void
+    {
+        $role = Role::query()->firstWhere('slug', 'laboratory');
+        $staff = Staff::factory()->create(['name' => 'Old Name']);
+
+        $this->put(route('settings.staff.update', $staff), [
+            'name' => 'New Name',
+            'phone' => '0700000001',
+            'role_id' => $role->id,
+        ])->assertRedirect(route('settings.staff.index'));
+
+        $staff->refresh();
+
+        $this->assertSame('New Name', $staff->name);
+        $this->assertSame($role->id, $staff->role_id);
+        $this->assertSame('0700000001', $staff->phone);
+    }
+
+    public function test_staff_without_edit_cannot_update_a_member(): void
+    {
+        $user = $this->staffUser([
+            LabPermission::Dashboard->value,
+            LabPermission::Staff->value,
+        ]);
+        $staff = Staff::factory()->create(['name' => 'Locked']);
+
+        $this->actingAs($user)
+            ->put(route('settings.staff.update', $staff), [
+                'name' => 'Changed',
+                'role_id' => $staff->role_id,
+            ])
+            ->assertForbidden();
+
+        $this->assertSame('Locked', $staff->fresh()->name);
+    }
+
+    public function test_user_cannot_delete_their_own_staff_record(): void
+    {
+        $actor = User::query()->firstWhere('email', 'manager@ssml.test');
+        $staff = Staff::factory()->create([
+            'user_id' => $actor->id,
+            'name' => $actor->name,
+        ]);
+
+        $this->from(route('settings.staff.index'))
+            ->delete(route('settings.staff.destroy', $staff))
+            ->assertRedirect(route('settings.staff.index'))
+            ->assertSessionHasErrors('staff');
+
+        $this->assertModelExists($staff);
+    }
 }

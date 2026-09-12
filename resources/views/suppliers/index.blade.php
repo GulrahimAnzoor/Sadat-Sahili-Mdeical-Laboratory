@@ -25,7 +25,9 @@
                             <td class="px-5 py-3">
                                 <div class="lab-actions">
                                     <x-btn :href="route('purchases.create', ['supplier_id' => $supplier->id])" size="sm" variant="teal" icon="cart">{{ __('Purchase') }}</x-btn>
-                                    <x-btn :href="route('suppliers.edit', $supplier)" size="sm" variant="slate" icon="edit">{{ __('Edit') }}</x-btn>
+                                    @can('records.edit')
+                                        <x-btn :href="route('suppliers.edit', $supplier)" size="sm" variant="slate" icon="edit">{{ __('Edit') }}</x-btn>
+                                    @endcan
                                 </div>
                             </td>
                         </tr>

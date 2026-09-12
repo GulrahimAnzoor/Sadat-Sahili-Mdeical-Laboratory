@@ -44,12 +44,16 @@
                                                 <x-btn type="submit" size="sm" variant="amber" icon="pay">{{ __('Pay') }}</x-btn>
                                             </form>
                                         @endunless
-                                        <x-btn :href="route('patient-tests.edit', $patientTest)" size="sm" variant="slate" icon="edit">{{ __('Edit') }}</x-btn>
-                                        <form method="POST" action="{{ route('patient-tests.destroy', $patientTest) }}">
-                                            @csrf
-                                            @method('DELETE')
-                                            <x-btn type="submit" size="sm" variant="danger" icon="trash">{{ __('Delete') }}</x-btn>
-                                        </form>
+                                        @can('records.edit')
+                                            <x-btn :href="route('patient-tests.edit', $patientTest)" size="sm" variant="slate" icon="edit">{{ __('Edit') }}</x-btn>
+                                        @endcan
+                                        @can('records.delete')
+                                            <form method="POST" action="{{ route('patient-tests.destroy', $patientTest) }}">
+                                                @csrf
+                                                @method('DELETE')
+                                                <x-btn type="submit" size="sm" variant="danger" icon="trash">{{ __('Delete') }}</x-btn>
+                                            </form>
+                                        @endcan
                                     </div>
                                 </td>
                             </tr>

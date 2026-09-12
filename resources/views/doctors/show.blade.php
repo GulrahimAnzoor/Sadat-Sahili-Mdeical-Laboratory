@@ -2,7 +2,9 @@
     <x-page-header :description="__('Referring doctor')">
         <x-slot:actions>
             <x-btn :href="route('patients.create', ['doctor_id' => $doctor->id])" icon="plus">{{ __('New patient') }}</x-btn>
-            <x-btn :href="route('doctors.edit', $doctor)" variant="secondary" icon="edit">{{ __('Edit') }}</x-btn>
+            @can('records.edit')
+                <x-btn :href="route('doctors.edit', $doctor)" variant="secondary" icon="edit">{{ __('Edit') }}</x-btn>
+            @endcan
             <x-btn :href="route('doctors.index')" variant="ghost" icon="back">{{ __('Back') }}</x-btn>
         </x-slot:actions>
     </x-page-header>

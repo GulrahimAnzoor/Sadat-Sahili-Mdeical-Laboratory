@@ -19,6 +19,8 @@ enum LabPermission: string
     case Settings = 'settings.view';
     case Staff = 'staff.manage';
     case Accounts = 'accounts.manage';
+    case Edit = 'records.edit';
+    case Delete = 'records.delete';
 
     public function label(): string
     {
@@ -38,6 +40,8 @@ enum LabPermission: string
             self::Settings => __('Settings'),
             self::Staff => __('Staff and roles'),
             self::Accounts => __('Cash accounts'),
+            self::Edit => __('Edit records'),
+            self::Delete => __('Delete records'),
         };
     }
 
@@ -48,7 +52,7 @@ enum LabPermission: string
             self::Lab, self::Reports => __('Laboratory'),
             self::Finance, self::Accounts => __('Finance'),
             self::Suppliers, self::Purchases, self::Inventory, self::Expenses => __('Store'),
-            self::Doctors, self::Tests, self::Settings, self::Staff => __('Administration'),
+            self::Doctors, self::Tests, self::Settings, self::Staff, self::Edit, self::Delete => __('Administration'),
         };
     }
 

@@ -2,7 +2,9 @@
     <x-page-header :description="__('Patient: :name', ['name' => $testResult->patient->name])">
         <x-slot:actions>
             <x-btn :href="route('reports.show', $testResult->patient)" icon="report">{{ __('Report') }}</x-btn>
-            <x-btn :href="route('test-results.edit', $testResult)" variant="secondary" icon="edit">{{ __('Edit') }}</x-btn>
+            @can('records.edit')
+                <x-btn :href="route('test-results.edit', $testResult)" variant="secondary" icon="edit">{{ __('Edit') }}</x-btn>
+            @endcan
             <x-btn :href="route('patients.show', $testResult->patient)" variant="ghost" icon="user">{{ __('Patient page') }}</x-btn>
         </x-slot:actions>
     </x-page-header>

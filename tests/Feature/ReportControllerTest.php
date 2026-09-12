@@ -42,9 +42,12 @@ class ReportControllerTest extends TestCase
         $response->assertSee('Elevated values may indicate diabetes mellitus.');
         $response->assertSee('Hexokinase');
         $response->assertSee('Saadat Salihi');
-        $response->assertSee('سعادت صالحي طبي', false);
+        $response->assertSee('سعادت صالحي', false);
+        $response->assertSee('report-brand-accent-ps');
+        $response->assertSee('طبي', false);
         $response->assertSee('لابراتوار', false);
         $response->assertSee('0787698996');
+        $response->assertDontSee(config('lab.email'));
         $response->assertSee(config('lab.address'));
         $response->assertSee('report-top');
         $response->assertSee('report-main');

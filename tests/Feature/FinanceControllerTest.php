@@ -26,6 +26,7 @@ class FinanceControllerTest extends TestCase
         $response->assertOk();
         $response->assertSee('200.00');
         $response->assertSee('Finance');
+        $response->assertSee('Period report');
         $response->assertSee('Opening');
         $response->assertSee('Closing');
     }

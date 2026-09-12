@@ -12,11 +12,21 @@
 @endphp
 
 <section class="report-test-block">
-@if ($test)
+@if ($test && ! $test->hidesStandardTitle())
     <h3 class="report-test-title">{{ $title }}</h3>
 @endif
 
 @if ($testResult)
+    @if ($test?->report_layout === \App\Enums\ReportLayout::UrineExam)
+        @include('reports.partials.urine-exam', ['showCasts' => true])
+    @elseif ($test?->report_layout === \App\Enums\ReportLayout::StoolExam)
+        @include('reports.partials.urine-exam', [
+            'reportTitle' => __('Stool Exam Report'),
+            'showCasts' => false,
+        ])
+    @elseif ($test?->report_layout === \App\Enums\ReportLayout::TorchPanel)
+        @include('reports.partials.torch-panel')
+    @else
     <table class="report-table">
         <thead>
             <tr>
@@ -58,12 +68,25 @@
             @endif
         </tbody>
     </table>
+    @endif
 
     @if ($testResult->relationLoaded('sensitivities') && $testResult->sensitivities->isNotEmpty())
-        <div class="report-notes">
-            <h4>{{ __('Culture report') }}</h4>
-            <p>{{ __('Organism') }}: <strong>{{ $testResult->organism ?: '—' }}</strong> · {{ __('Colony count') }}: {{ $testResult->colony_count ?: '—' }} · {{ __('Gram stain') }}: {{ $testResult->gram_stain ?: '—' }}</p>
-        </div>
+        <table class="report-table report-culture">
+            <thead>
+                <tr>
+                    <th>{{ __('Antibiotic') }}</th>
+                    <th>{{ __('Sensitivity') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($testResult->sensitivities as $sensitivity)
+                    <tr>
+                        <td>{{ $sensitivity->antibiotic }}</td>
+                        <td>{{ $sensitivity->sensitivity?->label() ?? $sensitivity->sensitivity }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
     @endif
 
     @if (filled($test?->interpretation))

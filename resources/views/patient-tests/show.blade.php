@@ -5,7 +5,9 @@
                 <x-btn :href="route('test-results.create', ['patient_id' => $patientTest->patient_id, 'test_id' => $patientTest->test_id])" icon="flask">{{ __('Record result') }}</x-btn>
             @endunless
             <x-btn :href="route('tokens.show', $patientTest->patient)" variant="secondary" icon="ticket">{{ __('Token') }}</x-btn>
-            <x-btn :href="route('patient-tests.edit', $patientTest)" variant="secondary" icon="edit">{{ __('Edit') }}</x-btn>
+            @can('records.edit')
+                <x-btn :href="route('patient-tests.edit', $patientTest)" variant="secondary" icon="edit">{{ __('Edit') }}</x-btn>
+            @endcan
             <x-btn :href="route('patients.show', $patientTest->patient)" variant="ghost" icon="user">{{ __('Patient page') }}</x-btn>
         </x-slot:actions>
     </x-page-header>

@@ -13,6 +13,7 @@ use App\Support\StaffCredentials;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class StaffController extends Controller
@@ -24,6 +25,7 @@ class StaffController extends Controller
         return view('settings.staff', [
             'roles' => $roles,
             'staff' => Staff::query()->with(['role', 'account', 'user'])->latest('id')->get(),
+            'administratorCount' => User::query()->where('is_admin', true)->count(),
             'accounts' => Account::query()->orderBy('name')->get(),
             'permissionGroups' => LabPermission::grouped(),
             'loginDomain' => Str::after((string) config('lab.email'), '@') ?: 'ssml.af',
@@ -122,7 +124,17 @@ class StaffController extends Controller
 
     public function destroy(Staff $staff): RedirectResponse
     {
-        abort_if($staff->user_id !== null && $staff->user_id === auth()->id(), 403);
+        if ($staff->user_id !== null && $staff->user_id === auth()->id()) {
+            throw ValidationException::withMessages([
+                'staff' => __('You cannot delete your own login.'),
+            ]);
+        }
+
+        if ($staff->user?->is_admin && User::query()->where('is_admin', true)->count() <= 1) {
+            throw ValidationException::withMessages([
+                'staff' => __('The last administrator cannot be deleted.'),
+            ]);
+        }
 
         DB::transaction(function () use ($staff): void {
             $user = $staff->user;

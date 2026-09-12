@@ -78,12 +78,16 @@
                             <td class="px-5 py-3">
                                 <div class="lab-actions">
                                     <x-btn :href="route('inventory-items.show', $item)" size="sm" variant="teal" icon="eye">{{ __('View') }}</x-btn>
-                                    <x-btn :href="route('inventory-items.edit', $item)" size="sm" variant="slate" icon="edit">{{ __('Edit') }}</x-btn>
-                                    <form method="POST" action="{{ route('inventory-items.destroy', $item) }}">
-                                        @csrf
-                                        @method('DELETE')
-                                        <x-btn type="submit" size="sm" variant="danger" icon="trash">{{ __('Delete') }}</x-btn>
-                                    </form>
+                                    @can('records.edit')
+                                        <x-btn :href="route('inventory-items.edit', $item)" size="sm" variant="slate" icon="edit">{{ __('Edit') }}</x-btn>
+                                    @endcan
+                                    @can('records.delete')
+                                        <form method="POST" action="{{ route('inventory-items.destroy', $item) }}">
+                                            @csrf
+                                            @method('DELETE')
+                                            <x-btn type="submit" size="sm" variant="danger" icon="trash">{{ __('Delete') }}</x-btn>
+                                        </form>
+                                    @endcan
                                 </div>
                             </td>
                         </tr>

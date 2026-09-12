@@ -62,6 +62,8 @@ class User extends Authenticatable
             return false;
         }
 
+        $this->loadMissing('staff.role');
+
         $permissions = $this->staff?->role?->permissions ?? [];
 
         return in_array($ability, $permissions, true);

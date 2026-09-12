@@ -40,11 +40,13 @@
         <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400">{{ __('Catalogue') }}</p>
         <div class="grid gap-4 lg:grid-cols-2">
             @can('tests.manage')
-                <x-settings-card :href="route('settings.test-reports.edit')" :title="__('Report ranges and summaries')" :description="__('Select a test, then paste its range and summary. Printing shows the result on top, the range on the right, and the summary below.')" :count="$summaryCount" tone="sky">
-                    <x-slot:icon>
-                        <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 4.5h10M8.5 4.5v3.2L6 12.8V18a4.5 4.5 0 0 0 12 0v-5.2L15.5 7.7V4.5M9.5 15.5h5" /></svg>
-                    </x-slot:icon>
-                </x-settings-card>
+                @can('records.edit')
+                    <x-settings-card :href="route('settings.test-reports.edit')" :title="__('Report ranges and summaries')" :description="__('Select a test, then paste its range and summary. Printing shows the result on top, the range on the right, and the summary below.')" :count="$summaryCount" tone="sky">
+                        <x-slot:icon>
+                            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 4.5h10M8.5 4.5v3.2L6 12.8V18a4.5 4.5 0 0 0 12 0v-5.2L15.5 7.7V4.5M9.5 15.5h5" /></svg>
+                        </x-slot:icon>
+                    </x-settings-card>
+                @endcan
                 <x-settings-card :href="route('tests.index')" :title="__('Tests')" :description="__('Open the catalogue to add, edit, or print tests.')" :count="$testCount" tone="cyan">
                     <x-slot:icon>
                         <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3h6m-5.2 0v4.5L7 13.2V18a5 5 0 0 0 10 0v-4.8L14.2 7.5V3" /></svg>

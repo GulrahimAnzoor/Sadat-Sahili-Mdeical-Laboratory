@@ -26,11 +26,13 @@
                     @foreach ($items as $item)
                         <li class="flex items-center justify-between gap-3 px-5 py-3">
                             <p class="font-medium text-slate-800 dark:text-slate-100">{{ $item->name }}</p>
-                            <form method="POST" action="{{ route('settings.goods.destroy', $item) }}">
-                                @csrf
-                                @method('DELETE')
-                                <x-btn type="submit" size="sm" variant="danger" icon="trash">{{ __('Delete') }}</x-btn>
-                            </form>
+                            @can('records.delete')
+                                <form method="POST" action="{{ route('settings.goods.destroy', $item) }}">
+                                    @csrf
+                                    @method('DELETE')
+                                    <x-btn type="submit" size="sm" variant="danger" icon="trash">{{ __('Delete') }}</x-btn>
+                                </form>
+                            @endcan
                         </li>
                     @endforeach
                 </ul>

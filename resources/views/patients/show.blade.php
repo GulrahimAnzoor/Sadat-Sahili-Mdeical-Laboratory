@@ -3,7 +3,9 @@
         <x-slot:actions>
             <x-btn :href="route('reception.visit', $patient)" icon="plus">{{ __('New visit') }}</x-btn>
             <x-btn :href="route('reports.show', $patient)" variant="secondary" icon="report">{{ __('Report') }}</x-btn>
-            <x-btn :href="route('patients.edit', $patient)" variant="slate" icon="edit">{{ __('Edit') }}</x-btn>
+            @can('records.edit')
+                <x-btn :href="route('patients.edit', $patient)" variant="slate" icon="edit">{{ __('Edit') }}</x-btn>
+            @endcan
             <x-btn :href="route('patients.index')" variant="ghost" icon="back">{{ __('Back') }}</x-btn>
         </x-slot:actions>
     </x-page-header>

@@ -2,7 +2,9 @@
     <x-page-header>
         <x-slot:actions>
             <x-btn :href="route('purchases.create', ['supplier_id' => $supplier->id])" icon="plus">{{ __('New purchase') }}</x-btn>
-            <x-btn :href="route('suppliers.edit', $supplier)" variant="secondary" icon="edit">{{ __('Edit') }}</x-btn>
+            @can('records.edit')
+                <x-btn :href="route('suppliers.edit', $supplier)" variant="secondary" icon="edit">{{ __('Edit') }}</x-btn>
+            @endcan
         </x-slot:actions>
     </x-page-header>
     <dl class="lab-card mb-6 grid gap-4 p-6 sm:grid-cols-3">

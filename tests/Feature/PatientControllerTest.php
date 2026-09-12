@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Enums\AgeUnit;
 use App\Models\Doctor;
 use App\Models\Patient;
+use App\Models\PatientTest;
+use App\Models\TestResult;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -97,6 +99,33 @@ class PatientControllerTest extends TestCase
         $response->assertRedirect(route('patients.index'));
         $response->assertSessionHas('success', 'Patient deleted.');
         $this->assertModelMissing($patient);
+    }
+
+    public function test_destroy_deletes_patient_with_visit_result_and_keeps_cash(): void
+    {
+        $patientTest = PatientTest::factory()->create(['paid' => true]);
+        $patient = $patientTest->patient;
+        $visit = $patientTest->fresh()->visit;
+        $result = TestResult::factory()->create([
+            'patient_id' => $patient->id,
+            'test_id' => $patientTest->test_id,
+            'visit_id' => $visit?->id,
+        ]);
+        $cash = $visit?->cashTransactions()->first();
+
+        $this->assertNotNull($visit);
+        $this->assertNotNull($cash);
+
+        $this->delete(route('patients.destroy', $patient))
+            ->assertRedirect(route('patients.index'))
+            ->assertSessionHas('success', 'Patient deleted.');
+
+        $this->assertModelMissing($patient);
+        $this->assertModelMissing($patientTest);
+        $this->assertModelMissing($visit);
+        $this->assertModelMissing($result);
+        $this->assertModelExists($cash);
+        $this->assertNull($cash->fresh()->visit_id);
     }
 
     public function test_store_saves_age_in_years_by_default(): void

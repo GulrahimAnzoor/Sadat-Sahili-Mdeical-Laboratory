@@ -1,7 +1,9 @@
 <x-layout :title="$purchase->bill_number">
     <x-page-header :description="$purchase->supplier->name">
         <x-slot:actions>
-            <x-btn :href="route('purchases.edit', $purchase)" variant="secondary" icon="edit">{{ __('Edit') }}</x-btn>
+            @can('records.edit')
+                <x-btn :href="route('purchases.edit', $purchase)" variant="secondary" icon="edit">{{ __('Edit') }}</x-btn>
+            @endcan
             <x-btn :href="route('purchases.index')" variant="ghost" icon="back">{{ __('Back') }}</x-btn>
         </x-slot:actions>
     </x-page-header>

@@ -12,25 +12,37 @@
     </div>
 
     <div class="report-root">
-        <article class="report-page">
-            @include('reports._watermark')
+        @forelse ($visit->patientTests as $patientTest)
+            <article class="report-page">
+                @include('reports._watermark')
 
-            <header class="report-top">
-                @include('reports._header', ['patient' => $patient, 'visit' => $visit])
-            </header>
+                <header class="report-top">
+                    @include('reports._header', ['patient' => $patient, 'visit' => $visit])
+                </header>
 
-            <main class="report-main">
-                @forelse ($visit->patientTests as $patientTest)
+                <main class="report-main">
                     @include('reports._test-block', [
                         'patientTest' => $patientTest,
                         'testResult' => $resultsByTestId->get($patientTest->test_id),
                     ])
-                @empty
-                    <p class="report-empty">{{ __('No tests have been assigned.') }}</p>
-                @endforelse
-            </main>
+                </main>
 
-            @include('reports._footer')
-        </article>
+                @include('reports._footer')
+            </article>
+        @empty
+            <article class="report-page">
+                @include('reports._watermark')
+
+                <header class="report-top">
+                    @include('reports._header', ['patient' => $patient, 'visit' => $visit])
+                </header>
+
+                <main class="report-main">
+                    <p class="report-empty">{{ __('No tests have been assigned.') }}</p>
+                </main>
+
+                @include('reports._footer')
+            </article>
+        @endforelse
     </div>
 </x-layout>

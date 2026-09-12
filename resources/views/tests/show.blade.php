@@ -2,13 +2,17 @@
     <x-page-header :description="__('Test details, price, and normal range')">
         <x-slot:actions>
             <x-btn :href="route('patient-tests.create', ['test_id' => $test->id])" icon="flask">{{ __('Assign to patient') }}</x-btn>
-            <x-btn :href="route('settings.test-reports.edit', $test)" variant="secondary" icon="report">{{ __('Range and summary') }}</x-btn>
-            <x-btn :href="route('tests.edit', $test)" variant="secondary" icon="edit">{{ __('Edit') }}</x-btn>
-            <form method="POST" action="{{ route('tests.destroy', $test) }}">
-                @csrf
-                @method('DELETE')
-                <x-btn type="submit" variant="danger" icon="trash">{{ __('Delete') }}</x-btn>
-            </form>
+            @can('records.edit')
+                <x-btn :href="route('settings.test-reports.edit', $test)" variant="secondary" icon="report">{{ __('Range and summary') }}</x-btn>
+                <x-btn :href="route('tests.edit', $test)" variant="secondary" icon="edit">{{ __('Edit') }}</x-btn>
+            @endcan
+            @can('records.delete')
+                <form method="POST" action="{{ route('tests.destroy', $test) }}">
+                    @csrf
+                    @method('DELETE')
+                    <x-btn type="submit" variant="danger" icon="trash">{{ __('Delete') }}</x-btn>
+                </form>
+            @endcan
             <x-btn :href="route('tests.index')" variant="ghost" icon="back">{{ __('Back') }}</x-btn>
         </x-slot:actions>
     </x-page-header>
@@ -54,11 +58,13 @@
                             <p class="font-medium">{{ $parameter->name }} <span class="text-xs text-slate-400">{{ $parameter->group_name }}</span></p>
                             <p class="whitespace-pre-wrap text-xs text-slate-500">{{ $parameter->unit }} · {{ $parameter->normal_range }}</p>
                         </div>
-                        <form method="POST" action="{{ route('tests.parameters.destroy', [$test, $parameter]) }}">
-                            @csrf
-                            @method('DELETE')
-                            <x-btn type="submit" size="sm" variant="danger" icon="trash">{{ __('Delete') }}</x-btn>
-                        </form>
+                        @can('records.delete')
+                            <form method="POST" action="{{ route('tests.parameters.destroy', [$test, $parameter]) }}">
+                                @csrf
+                                @method('DELETE')
+                                <x-btn type="submit" size="sm" variant="danger" icon="trash">{{ __('Delete') }}</x-btn>
+                            </form>
+                        @endcan
                     </li>
                 @endforeach
             </ul>

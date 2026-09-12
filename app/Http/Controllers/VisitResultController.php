@@ -25,6 +25,7 @@ class VisitResultController extends Controller
             'patientTests.test.parameters',
             'testResults.values',
             'testResults.test',
+            'testResults.sensitivities',
         ]);
 
         $resultsByTestId = $visit->testResults->keyBy('test_id');
@@ -93,12 +94,19 @@ class VisitResultController extends Controller
                 $overall = $row['result'] ?? data_get($values->first(), 'value');
                 $hasMaterials = (bool) ($row['consume_materials'] ?? false);
                 $materials = $row['materials'] ?? [];
+                $sensitivities = collect($row['sensitivities'] ?? []);
+                $hasCulture = filled($row['organism'] ?? null)
+                    || filled($row['colony_count'] ?? null)
+                    || filled($row['gram_stain'] ?? null)
+                    || filled($row['specimen'] ?? null)
+                    || filled($row['culture_method'] ?? null)
+                    || $sensitivities->isNotEmpty();
 
-                if (! filled($overall) && $values->isEmpty() && ! $hasMaterials) {
+                if (! filled($overall) && $values->isEmpty() && ! $hasMaterials && ! $hasCulture) {
                     continue;
                 }
 
-                if (filled($overall) || $values->isNotEmpty()) {
+                if (filled($overall) || $values->isNotEmpty() || $hasCulture) {
                     $unit = $row['unit']
                         ?? $test->parameters->first()?->unit
                         ?? '';
@@ -112,6 +120,11 @@ class VisitResultController extends Controller
                         [
                             'result' => (string) ($overall ?? ''),
                             'unit' => (string) $unit,
+                            'organism' => $row['organism'] ?? null,
+                            'colony_count' => $row['colony_count'] ?? null,
+                            'gram_stain' => $row['gram_stain'] ?? null,
+                            'specimen' => $row['specimen'] ?? null,
+                            'culture_method' => $row['culture_method'] ?? null,
                         ],
                     );
 
@@ -121,6 +134,16 @@ class VisitResultController extends Controller
                         $testResult->values()->create([
                             'test_parameter_id' => $valueRow['test_parameter_id'],
                             'value' => $valueRow['value'],
+                        ]);
+                    }
+
+                    $testResult->sensitivities()->delete();
+
+                    foreach ($sensitivities->values() as $order => $sensitivity) {
+                        $testResult->sensitivities()->create([
+                            'antibiotic' => $sensitivity['antibiotic'],
+                            'sensitivity' => $sensitivity['sensitivity'],
+                            'sort_order' => $order + 1,
                         ]);
                     }
 
@@ -161,7 +184,7 @@ class VisitResultController extends Controller
     }
 
     /**
-     * @param  list<array{name?: string|null, value?: string|null, unit?: string|null, normal_range?: string|null}>  $rows
+     * @param  list<array{name?: string|null, value?: string|null, unit?: string|null, normal_range?: string|null, group_name?: string|null}>  $rows
      * @return list<array{test_parameter_id: int, value: string}>
      */
     private function createParametersFromExtraRows(Test $test, array $rows): array
@@ -174,6 +197,7 @@ class VisitResultController extends Controller
             $value = trim((string) ($row['value'] ?? ''));
             $unit = trim((string) ($row['unit'] ?? ''));
             $range = trim((string) ($row['normal_range'] ?? ''));
+            $groupName = trim((string) ($row['group_name'] ?? ''));
 
             if ($name === '' && $value === '') {
                 continue;
@@ -190,6 +214,7 @@ class VisitResultController extends Controller
                     'name' => $parameterName,
                     'unit' => $unit !== '' ? $unit : null,
                     'normal_range' => $range !== '' ? $range : null,
+                    'group_name' => $groupName !== '' ? $groupName : null,
                     'sort_order' => $nextOrder,
                 ]);
 
@@ -203,6 +228,10 @@ class VisitResultController extends Controller
 
                 if ($range !== '' && $parameter->normal_range !== $range) {
                     $updates['normal_range'] = $range;
+                }
+
+                if ($groupName !== '' && $parameter->group_name !== $groupName) {
+                    $updates['group_name'] = $groupName;
                 }
 
                 if ($updates !== []) {

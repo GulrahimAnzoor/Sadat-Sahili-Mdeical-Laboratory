@@ -37,13 +37,17 @@
                                 {{ __('Default') }}
                             </label>
                             <p class="pb-2 text-xs text-slate-400">{{ $account->staff_count }} {{ __('staff') }} · {{ $account->cash_transactions_count }} {{ __('Transactions') }}</p>
-                            <x-btn type="submit" variant="secondary" icon="save" size="sm">{{ __('Save') }}</x-btn>
+                            @can('records.edit')
+                                <x-btn type="submit" variant="secondary" icon="save" size="sm">{{ __('Save') }}</x-btn>
+                            @endcan
                         </form>
-                        <form method="POST" action="{{ route('accounts.destroy', $account) }}" class="mt-2">
-                            @csrf
-                            @method('DELETE')
-                            <x-btn type="submit" size="sm" variant="danger" icon="trash">{{ __('Delete') }}</x-btn>
-                        </form>
+                        @can('records.delete')
+                            <form method="POST" action="{{ route('accounts.destroy', $account) }}" class="mt-2">
+                                @csrf
+                                @method('DELETE')
+                                <x-btn type="submit" size="sm" variant="danger" icon="trash">{{ __('Delete') }}</x-btn>
+                            </form>
+                        @endcan
                     </li>
                 @endforeach
             </ul>

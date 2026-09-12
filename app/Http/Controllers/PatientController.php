@@ -8,10 +8,8 @@ use App\Models\Doctor;
 use App\Models\Patient;
 use App\Support\LabAlerts;
 use App\Support\RecordGuard;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class PatientController extends Controller
@@ -93,15 +91,7 @@ class PatientController extends Controller
 
     public function destroy(Patient $patient, RecordGuard $guard): RedirectResponse
     {
-        $guard->ensurePatientCanBeDeleted($patient);
-
-        try {
-            $patient->delete();
-        } catch (QueryException) {
-            throw ValidationException::withMessages([
-                'patient' => __('This patient has laboratory records and cannot be deleted.'),
-            ]);
-        }
+        $guard->deletePatient($patient);
 
         return redirect()
             ->route('patients.index')

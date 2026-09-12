@@ -1,7 +1,9 @@
 <x-layout :title="$expense->title">
     <x-page-header>
         <x-slot:actions>
-            <x-btn :href="route('expenses.edit', $expense)" variant="secondary" icon="edit">{{ __('Edit') }}</x-btn>
+            @can('records.edit')
+                <x-btn :href="route('expenses.edit', $expense)" variant="secondary" icon="edit">{{ __('Edit') }}</x-btn>
+            @endcan
             <x-btn :href="route('expenses.index')" variant="ghost" icon="back">{{ __('Back') }}</x-btn>
         </x-slot:actions>
     </x-page-header>

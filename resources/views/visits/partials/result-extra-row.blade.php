@@ -3,13 +3,17 @@
     $rowValue = $extraRow['value'] ?? '';
     $rowUnit = $extraRow['unit'] ?? '';
     $rowRange = $extraRow['normal_range'] ?? '';
+    $rowGroup = $extraRow['group_name'] ?? ($groupName ?? '');
 @endphp
 <tr data-extra-row>
     <td class="px-3 py-2 align-top">
+        @if ($rowGroup !== '')
+            <input type="hidden" name="results[0][extra_rows][{{ $extraIndex }}][group_name]" value="{{ $rowGroup }}">
+        @endif
         <input name="results[0][extra_rows][{{ $extraIndex }}][name]" value="{{ $rowName }}" class="lab-input" autocomplete="off" placeholder="{{ __('T3, T4, TSH') }}">
     </td>
     <td class="px-3 py-2 align-top">
-        <input name="results[0][extra_rows][{{ $extraIndex }}][value]" value="{{ $rowValue }}" class="lab-input" autocomplete="off">
+        <input name="results[0][extra_rows][{{ $extraIndex }}][value]" value="{{ $rowValue }}" data-normal-range="{{ $rowRange }}" class="lab-input" autocomplete="off">
     </td>
     <td class="px-3 py-2 align-top">
         <input name="results[0][extra_rows][{{ $extraIndex }}][unit]" value="{{ $rowUnit }}" class="lab-input" autocomplete="off" placeholder="{{ __('nmol/L') }}">
